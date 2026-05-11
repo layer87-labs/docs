@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://labs.layer87.de/sitemap.xml

@@ -8,6 +8,25 @@ const config: Config = {
   tagline: 'Open source tools by Layer87',
   favicon: 'img/layer87.png',
 
+  headTags: [
+    {
+      tagName: 'script',
+      attributes: { type: 'application/ld+json' },
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'layer87-labs docs',
+        url: 'https://labs.layer87.de',
+        description: 'Open source tools and documentation by Layer87 — relctl and more.',
+        publisher: {
+          '@type': 'Organization',
+          name: 'Layer87',
+          url: 'https://layer87.de',
+        },
+      }),
+    },
+  ],
+
   future: {
     v4: true,
   },
@@ -41,6 +60,11 @@ const config: Config = {
           editUrl: 'https://github.com/layer87-labs/docs/tree/main/',
         },
         blog: false,
+        sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+          ignorePatterns: ['/tags/**'],
+        },
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -49,6 +73,17 @@ const config: Config = {
   ],
 
   themeConfig: {
+    metadata: [
+      { name: 'description', content: 'Open source tools and documentation by Layer87 — relctl and more.' },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:site_name', content: 'layer87-labs docs' },
+      { property: 'og:image', content: 'https://labs.layer87.de/img/layer87.png' },
+      { property: 'og:image:width', content: '512' },
+      { property: 'og:image:height', content: '512' },
+      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:site', content: '@layer87de' },
+      { name: 'twitter:image', content: 'https://labs.layer87.de/img/layer87.png' },
+    ],
     colorMode: {
       defaultMode: 'dark',
       disableSwitch: true,

@@ -1,0 +1,63 @@
+name: Sync relctl Changelog
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [relctl-release]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync changelog
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        run: |
+          VERSION="${{ github.event.client_payload.version }}"
+          echo "version=${VERSION:-manual}" >> "$GITHUB_OUTPUT"
+
+      - name: Download CHANGELOG.md from relctl
+        run: |
+          curl -fsSL \
+            "https://raw.githubusercontent.com/layer87-labs/relctl/main/CHANGELOG.md" \
+            -o /tmp/relctl-CHANGELOG.md
+
+      - name: Update changelog doc
+        run: |
+          TARGET="docs/relctl/changelog.md"
+
+          # Build the new front matter + header section
+          cat > "$TARGET" <<'FRONTMATTER'
+          ---
+          sidebar_position: 5
+          title: Changelog
+          ---
+
+          # Changelog
+
+          > This file is automatically synchronized from [layer87-labs/relctl](https://github.com/layer87-labs/relctl/blob/main/CHANGELOG.md) on every release.
+
+          FRONTMATTER
+
+          # Append the downloaded changelog content
+          cat /tmp/relctl-CHANGELOG.md >> "$TARGET"
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add docs/relctl/changelog.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: sync relctl changelog ${{ steps.version.outputs.version }}"
+            git push
+          fi

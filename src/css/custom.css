@@ -1,0 +1,378 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─── Layer87 Brand Tokens ─────────────────────────────────────────────────── */
+:root {
+  --l87-cyan:        #22d3ee;
+  --l87-violet:      #a855f7;
+  --l87-pink:        #ec4899;
+  --l87-gradient:    linear-gradient(135deg, #22d3ee 0%, #a855f7 50%, #ec4899 100%);
+  --l87-gradient-45: linear-gradient(45deg,  #22d3ee 0%, #a855f7 50%, #ec4899 100%);
+
+  --l87-bg:          #0d0f20;
+  --l87-bg-surface:  #13162e;
+  --l87-bg-elevated: #1a1f3a;
+  --l87-border:      rgba(168, 85, 247, 0.15);
+
+  --l87-text:        #f1f5f9;
+  --l87-text-muted:  #94a3b8;
+
+  /* Infima primary → violet */
+  --ifm-color-primary:          #a855f7;
+  --ifm-color-primary-dark:     #9333ea;
+  --ifm-color-primary-darker:   #7c3aed;
+  --ifm-color-primary-darkest:  #6d28d9;
+  --ifm-color-primary-light:    #c084fc;
+  --ifm-color-primary-lighter:  #d8b4fe;
+  --ifm-color-primary-lightest: #ede9fe;
+
+  --ifm-font-family-base:       'Inter', system-ui, -apple-system, sans-serif;
+  --ifm-font-family-monospace:  'JetBrains Mono', 'Fira Code', monospace;
+  --ifm-code-font-size:         90%;
+  --ifm-heading-font-weight:    700;
+
+  --ifm-background-color:        var(--l87-bg);
+  --ifm-background-surface-color: var(--l87-bg-surface);
+  --ifm-navbar-background-color: rgba(13, 15, 32, 0.92);
+  --ifm-navbar-shadow:           0 1px 0 var(--l87-border);
+  --ifm-footer-background-color: var(--l87-bg-surface);
+
+  --ifm-toc-border-color:        var(--l87-border);
+  --ifm-color-content:           var(--l87-text);
+  --ifm-color-content-secondary: var(--l87-text-muted);
+  --ifm-link-color:              var(--l87-cyan);
+  --ifm-link-hover-color:        var(--l87-violet);
+
+  --ifm-pre-background:          var(--l87-bg-elevated);
+  --ifm-code-background:         rgba(168, 85, 247, 0.08);
+
+  --docusaurus-highlighted-code-line-bg: rgba(168, 85, 247, 0.12);
+
+  /* Scrollbar */
+  scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+  scrollbar-width: thin;
+}
+
+/* Dark overrides – site defaults to dark */
+[data-theme='dark'] {
+  --ifm-color-primary:          #c084fc;
+  --ifm-color-primary-dark:     #a855f7;
+  --ifm-color-primary-darker:   #9333ea;
+  --ifm-color-primary-darkest:  #7c3aed;
+  --ifm-color-primary-light:    #d8b4fe;
+  --ifm-color-primary-lighter:  #ede9fe;
+  --ifm-color-primary-lightest: #f5f3ff;
+
+  --ifm-background-color:        var(--l87-bg);
+  --ifm-background-surface-color: var(--l87-bg-surface);
+  --ifm-navbar-background-color: rgba(13, 15, 32, 0.92);
+  --ifm-footer-background-color: var(--l87-bg-surface);
+  --ifm-color-content:           var(--l87-text);
+  --ifm-color-content-secondary: var(--l87-text-muted);
+  --ifm-link-color:              var(--l87-cyan);
+  --ifm-link-hover-color:        var(--l87-violet);
+  --ifm-pre-background:          var(--l87-bg-elevated);
+
+  --docusaurus-highlighted-code-line-bg: rgba(168, 85, 247, 0.15);
+}
+
+/* ─── Global ────────────────────────────────────────────────────────────────── */
+html {
+  background-color: var(--l87-bg);
+}
+
+body {
+  font-family: var(--ifm-font-family-base);
+  background-color: var(--l87-bg);
+  color: var(--l87-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Gradient Text Utility ─────────────────────────────────────────────────── */
+.gradient-text {
+  background: var(--l87-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Navbar ─────────────────────────────────────────────────────────────────── */
+.navbar {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--l87-border);
+}
+
+.navbar__title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  background: var(--l87-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.navbar__logo {
+  height: 32px;
+  width: auto;
+  margin-right: 0.5rem;
+}
+
+.navbar__link {
+  font-weight: 500;
+  color: var(--l87-text-muted) !important;
+  transition: color 0.2s;
+}
+
+.navbar__link:hover,
+.navbar__link--active {
+  color: var(--l87-text) !important;
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────────────────────────── */
+.menu {
+  background-color: var(--l87-bg-surface);
+  font-size: 0.875rem;
+}
+
+.menu__link {
+  border-radius: 6px;
+  color: var(--l87-text-muted);
+  font-weight: 400;
+  transition: all 0.15s;
+}
+
+.menu__link:hover {
+  background: rgba(168, 85, 247, 0.08);
+  color: var(--l87-text);
+}
+
+.menu__link--active {
+  background: rgba(168, 85, 247, 0.12) !important;
+  color: var(--l87-cyan) !important;
+  font-weight: 500;
+}
+
+.menu__caret::before {
+  filter: brightness(0) saturate(100%) invert(60%) sepia(10%) saturate(300%) hue-rotate(200deg);
+}
+
+/* ─── Doc Content ─────────────────────────────────────────────────────────────── */
+.docMainContainer,
+.docItemContainer {
+  max-width: 860px;
+}
+
+article h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  background: var(--l87-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+article h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--l87-text);
+  border-bottom: 1px solid var(--l87-border);
+  padding-bottom: 0.4rem;
+  margin-top: 2.5rem;
+}
+
+article h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--l87-cyan);
+}
+
+/* ─── Code Blocks ─────────────────────────────────────────────────────────────── */
+code {
+  border: 1px solid var(--l87-border);
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.prism-code {
+  border: 1px solid var(--l87-border);
+  border-radius: 10px;
+}
+
+div[class^='codeBlockTitle'] {
+  background: var(--l87-bg-elevated);
+  border-bottom: 1px solid var(--l87-border);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.75rem;
+  color: var(--l87-text-muted);
+}
+
+/* ─── Tables ─────────────────────────────────────────────────────────────────── */
+table {
+  border-radius: 8px;
+  overflow: hidden;
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+}
+
+table thead tr {
+  background: var(--l87-bg-elevated);
+  border-bottom: 1px solid var(--l87-border);
+}
+
+table thead th {
+  color: var(--l87-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+}
+
+table tbody tr {
+  border-bottom: 1px solid rgba(168, 85, 247, 0.06);
+  transition: background 0.15s;
+}
+
+table tbody tr:hover {
+  background: rgba(168, 85, 247, 0.04);
+}
+
+table tbody td {
+  padding: 0.65rem 1rem;
+  color: var(--l87-text);
+  font-size: 0.9rem;
+}
+
+/* ─── Admonitions ─────────────────────────────────────────────────────────────── */
+.alert {
+  border-radius: 8px;
+  border-left-width: 3px;
+  background: var(--l87-bg-elevated);
+}
+
+.alert--info    { border-left-color: var(--l87-cyan);   }
+.alert--tip     { border-left-color: var(--l87-violet); }
+.alert--warning { border-left-color: #f59e0b; }
+.alert--danger  { border-left-color: #ef4444; }
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────────── */
+.button--primary {
+  background: var(--l87-gradient);
+  border: none;
+  font-weight: 600;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.button--primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  color: #fff;
+}
+
+.button--secondary {
+  border: 1px solid var(--l87-border);
+  background: transparent;
+  color: var(--l87-text) !important;
+  font-weight: 500;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.button--secondary:hover {
+  border-color: var(--l87-violet);
+  background: rgba(168, 85, 247, 0.08);
+  transform: translateY(-1px);
+}
+
+/* ─── Footer ─────────────────────────────────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--l87-border);
+}
+
+.footer__title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--l87-text-muted);
+}
+
+.footer__link-item {
+  color: var(--l87-text-muted);
+  font-size: 0.875rem;
+  transition: color 0.15s;
+}
+
+.footer__link-item:hover {
+  color: var(--l87-cyan);
+}
+
+.footer__copyright {
+  font-size: 0.8rem;
+  color: var(--l87-text-muted);
+}
+
+/* ─── TOC ─────────────────────────────────────────────────────────────────────── */
+.table-of-contents__link {
+  color: var(--l87-text-muted);
+  font-size: 0.825rem;
+  transition: color 0.15s;
+}
+
+.table-of-contents__link:hover,
+.table-of-contents__link--active {
+  color: var(--l87-cyan);
+}
+
+/* ─── Pagination ─────────────────────────────────────────────────────────────── */
+.pagination-nav__link {
+  border: 1px solid var(--l87-border);
+  border-radius: 8px;
+  background: var(--l87-bg-surface);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.pagination-nav__link:hover {
+  border-color: var(--l87-violet);
+  background: var(--l87-bg-elevated);
+}
+
+.pagination-nav__label {
+  color: var(--l87-cyan);
+  font-weight: 600;
+}
+
+/* ─── Search ──────────────────────────────────────────────────────────────────── */
+.DocSearch-Button {
+  background: var(--l87-bg-elevated) !important;
+  border: 1px solid var(--l87-border) !important;
+  border-radius: 8px !important;
+}
+
+/* ─── Breadcrumb ──────────────────────────────────────────────────────────────── */
+.breadcrumbs__item--active .breadcrumbs__link {
+  color: var(--l87-text-muted);
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(168, 85, 247, 0.5); }
+
+/* ─── Diagram cards ───────────────────────────────────────────────────────────── */
+.diagram-card {
+  display: block;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.2), 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  margin: 1.5rem 0;
+}
+.diagram-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+}

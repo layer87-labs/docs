@@ -43,6 +43,14 @@ const config: Config = {
     locales: ['en'],
   },
 
+  scripts: [
+    {
+      src: 'https://analytics.mgt.layer87.de/js/script.js',
+      defer: true,
+      'data-domain': 'labs.layer87.de',
+    },
+  ],
+
   themes: ['@docusaurus/theme-mermaid'],
   markdown: {
     mermaid: true,

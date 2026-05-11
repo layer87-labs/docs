@@ -1,41 +1,29 @@
-# Website
+# layer87-labs docs
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+Central documentation site for layer87-labs open source projects, built with [Docusaurus v3](https://docusaurus.io/).
 
-## Installation
-
-```bash
-yarn
-```
+Published at: **https://labs.layer87.de**
 
 ## Local Development
 
 ```bash
-yarn start
+pnpm install
+pnpm start
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+Opens a local dev server at `http://localhost:3000`. Most changes are reflected live.
 
 ## Build
 
 ```bash
-yarn build
+pnpm build
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+Generates static output into the `build/` directory.
 
 ## Deployment
 
-Using SSH:
+Deployment is handled automatically via GitHub Actions on every push to `main`.  
+The site is published to GitHub Pages with the custom domain `labs.layer87.de`.
 
-```bash
-USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```bash
-GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+To trigger a manual deploy, run the `deploy` workflow in the Actions tab.

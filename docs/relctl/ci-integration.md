@@ -78,7 +78,65 @@ Install `relctl` via the official action, then use it in your steps:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-### Full release workflow
+### Reusable workflows (all-in-one)
+
+`relctl-action` ships two ready-made reusable workflows that cover the most common CI patterns — no boilerplate needed.
+
+#### `generate-build-infos` — PR metadata for build jobs
+
+Use this on every pull request to derive the build version, SHA, branch, and semver bump level:
+
+```yaml title=".github/workflows/ci.yaml"
+jobs:
+  build-info:
+    uses: layer87-labs/relctl-action/.github/workflows/generate-build-infos.yml@v1
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: build-info
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build
+        run: make VERSION="${{ needs.build-info.outputs.version }}"
+```
+
+Available outputs: `pr`, `sha`, `sha-short`, `branch`, `owner`, `repo`, `patch-level`, `version` (`<next>-pr-<number>`), `latest-version`, `next-version`.
+
+#### `create-release` — Full release from merged PR
+
+Runs `relctl pr info` + `relctl release create` in one job:
+
+```yaml title=".github/workflows/release.yaml"
+jobs:
+  release:
+    uses: layer87-labs/relctl-action/.github/workflows/create-release.yml@v1
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: layer87-labs/relctl-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish release
+        run: |
+          relctl release publish \
+            --release-id "${{ needs.release.outputs.release-id }}" \
+            --asset "file=out/myapp_${{ needs.release.outputs.version }}_linux-amd64"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+Available outputs: `release-id`, `sha`, `sha-short`, `owner`, `repo`, `version`, `latest-version`, `next-version`.
+
+---
+
+### Full release workflow (manual steps)
 
 Three-job pattern: create draft → build matrix → publish with assets.
 

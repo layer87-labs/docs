@@ -34,6 +34,40 @@ flowchart TD
     end
 ```
 
+## PR comment overrides
+
+When `relctl` runs in CI with `pull-requests: write` permission, it posts a help comment to the PR and watches all comments for override commands. The **last matching comment** wins and is applied during the release.
+
+| Comment | Effect |
+|---------|--------|
+| `relctl_patch_level: major` | Force a **MAJOR** bump (overrides branch-derived level) |
+| `relctl_patch_level: minor` | Force a **MINOR** bump |
+| `relctl_patch_level: patch` | Force a **PATCH** bump |
+| `relctl_version_override: 2.1.0` | Pin the next version to exactly `2.1.0` (must be valid SemVer) |
+
+> `relctl_version_override` takes precedence over `relctl_patch_level`. Both commands must appear at the **start of a comment body** with the exact spacing shown above.
+
+### Required GitHub Actions permissions
+
+```yaml
+permissions:
+  contents: write       # create releases
+  pull-requests: write  # post help comment + read override commands
+```
+
+Without `pull-requests: write` the help comment is silently skipped and no overrides are evaluated.
+
+### Disable the help comment
+
+Set `RELCTL_SILENT=true` in your workflow to suppress the automated PR comment entirely while still evaluating override commands that are already present:
+
+```yaml
+env:
+  RELCTL_SILENT: "true"
+```
+
+---
+
 ### CI release pipeline
 
 ```mermaid

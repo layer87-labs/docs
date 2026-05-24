@@ -15,3 +15,10 @@ Release automation CLI for GitHub. Determines the next SemVer version from branc
 - [Documentation](/docs/relctl/intro)
 - [GitHub](https://github.com/layer87-labs/relctl)
 - [GitHub Action](https://github.com/layer87-labs/relctl-action)
+
+### kube-escalate
+
+Kubernetes Operator + kubectl plugin for Just-in-Time privilege escalation. Grant temporary, time-limited cluster access with automatic expiry, a full audit trail via Kubernetes Events, and Prometheus metrics — no CRDs, no database, no external dependencies.
+
+- [Documentation](/docs/kube-escalate/intro)
+- [GitHub](https://github.com/layer87-labs/kube-escalate)

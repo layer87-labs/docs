@@ -19,6 +19,13 @@ const PROJECTS: Project[] = [
     href: '/docs/relctl/intro',
     badge: 'Go · stable',
   },
+  {
+    name: 'kube-escalate',
+    description:
+      'Kubernetes Operator + kubectl plugin for Just-in-Time privilege escalation. Temporary, time-limited cluster access with automatic expiry, Kubernetes Events audit trail, and Prometheus metrics — no CRDs, no database.',
+    href: '/docs/kube-escalate/intro',
+    badge: 'Go · stable',
+  },
 ];
 
 function GlowOrb({className}: {className: string}) {

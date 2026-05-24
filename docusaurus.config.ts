@@ -17,7 +17,7 @@ const config: Config = {
         '@type': 'WebSite',
         name: 'layer87-labs docs',
         url: 'https://labs.layer87.de',
-        description: 'Open source tools and documentation by Layer87 — relctl and more.',
+        description: 'Open source tools and documentation by Layer87 — relctl, kube-escalate, and more.',
         publisher: {
           '@type': 'Organization',
           name: 'Layer87',
@@ -135,6 +135,10 @@ const config: Config = {
             {
               label: 'relctl',
               to: '/docs/relctl/intro',
+            },
+            {
+              label: 'kube-escalate',
+              to: '/docs/kube-escalate/intro',
             },
           ],
         },

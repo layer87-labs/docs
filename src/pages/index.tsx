@@ -26,6 +26,13 @@ const PROJECTS: Project[] = [
     href: '/docs/kube-escalate/intro',
     badge: 'Go · stable',
   },
+  {
+    name: 'webhull',
+    description:
+      'Fast, config-driven web server for multilingual, SEO-optimised websites. Single Go binary, zero runtime dependencies, distroless container under 20 MB. YAML + HTML content, built-in consent, first-party analytics proxy, and access gate.',
+    href: '/docs/webhull/intro',
+    badge: 'Go · stable',
+  },
 ];
 
 function GlowOrb({className}: {className: string}) {

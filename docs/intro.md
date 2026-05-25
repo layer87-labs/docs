@@ -22,3 +22,10 @@ Kubernetes Operator + kubectl plugin for Just-in-Time privilege escalation. Gran
 
 - [Documentation](/docs/kube-escalate/intro)
 - [GitHub](https://github.com/layer87-labs/kube-escalate)
+
+### webhull
+
+A fast, config-driven web server for multilingual, SEO-optimised websites. Single Go binary, zero runtime dependencies, distroless container under 20 MB. YAML + HTML content, built-in consent, first-party analytics proxy, and access gate.
+
+- [Documentation](/docs/webhull/intro)
+- [GitHub](https://github.com/layer87-labs/webhull)

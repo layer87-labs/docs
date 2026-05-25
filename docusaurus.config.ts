@@ -17,7 +17,7 @@ const config: Config = {
         '@type': 'WebSite',
         name: 'layer87-labs docs',
         url: 'https://labs.layer87.de',
-        description: 'Open source tools and documentation by Layer87 — relctl, kube-escalate, and more.',
+        description: 'Open source tools and documentation by Layer87 — relctl, kube-escalate, webhull, and more.',
         publisher: {
           '@type': 'Organization',
           name: 'Layer87',
@@ -82,7 +82,7 @@ const config: Config = {
 
   themeConfig: {
     metadata: [
-      { name: 'description', content: 'Open source tools and documentation by Layer87 — relctl and more.' },
+      { name: 'description', content: 'Open source tools and documentation by Layer87 — relctl, kube-escalate, webhull, and more.' },
       { property: 'og:type', content: 'website' },
       { property: 'og:site_name', content: 'layer87-labs docs' },
       { property: 'og:image', content: 'https://labs.layer87.de/img/layer87.png' },
@@ -139,6 +139,10 @@ const config: Config = {
             {
               label: 'kube-escalate',
               to: '/docs/kube-escalate/intro',
+            },
+            {
+              label: 'webhull',
+              to: '/docs/webhull/intro',
             },
           ],
         },

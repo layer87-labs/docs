@@ -15,6 +15,7 @@ relctl release [flags]
 
 ```
   -b, --body string             custom release message (markdown string or file path)
+      --config string           path to .relctl.yaml config file (default: .relctl.yaml)
       --dry-run                 dry-run without writing version to Git
   -h, --help                    help for release
       --hotfix                  create a hotfix release
@@ -24,18 +25,34 @@ relctl release [flags]
       --release-branch string   set release branch (default: repo default branch)
       --release-prefix string   custom release title prefix (default: "Release" or "Hotfix")
       --version string          override the calculated version
+      --version-scheme string   versioning scheme: semver (default) or calver
   -v, --verbose                 verbose output
 ```
 
 ## release create
 
-Create a new GitHub draft release from the merged PR context.
+Create a new GitHub draft release.
 
 ```bash
 relctl release create [flags]
 ```
 
 Inherits all flags from `relctl release`.
+
+**SemVer** (default): reads the merged PR's branch name, computes the bump, creates a draft release.
+
+**CalVer**: no branch prefix or PR context required; version is `YYYY.MM.DD.N` derived from local git tags.
+
+```bash
+# SemVer
+relctl release create --merge-sha $GITHUB_SHA
+
+# CalVer via flag
+relctl release create --version-scheme calver
+
+# CalVer via .relctl.yaml
+relctl release create
+```
 
 **Output env vars** (available as step outputs in GitHub Actions):
 

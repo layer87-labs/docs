@@ -83,3 +83,33 @@ relctl release publish \
   --asset "file=out/binary_darwin-arm64" \
   --asset "zip=out/extras"
 ```
+
+## How do I use CalVer instead of SemVer?
+
+Add a `.relctl.yaml` to your repo root:
+
+```yaml
+version_scheme: calver
+```
+
+Or pass the flag directly:
+
+```bash
+relctl release create --version-scheme calver
+```
+
+No branch prefix or PR context is required with CalVer.
+
+## How is the CalVer N counter calculated?
+
+`N` is derived exclusively from local git tags matching `YYYY.MM.DD.*` for today's date (UTC). relctl lists all matching tags, takes the highest N, and adds 1. If no tag exists for today, N starts at 1. No SCM API call is made.
+
+Requirement: the repository must be checked out with full tag history (`fetch-depth: 0`).
+
+## Can I mix CalVer and SemVer in the same repo?
+
+No. The scheme is set per-release via `--version-scheme` or `.relctl.yaml`. You can switch between schemes over time, but mixing within a single workflow is not supported.
+
+## Does CalVer work on Jenkins or without GitHub Actions?
+
+Yes. CalVer is fully provider-agnostic — it only reads local git tags. Any CI environment with `fetch-depth: 0` and `GITHUB_TOKEN` works.

@@ -102,7 +102,7 @@ flowchart TD
 Install `relctl` via the official action, then use it in your steps:
 
 ```yaml
-- uses: layer87-labs/relctl-action@v1
+- uses: layer87-labs/relctl-action@main
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -123,7 +123,7 @@ Use this on every pull request to derive the build version, SHA, branch, and sem
 ```yaml title=".github/workflows/ci.yaml"
 jobs:
   build-info:
-    uses: layer87-labs/relctl-action/.github/workflows/generate-build-infos.yml@v1
+    uses: layer87-labs/relctl-action/.github/workflows/generate-build-infos.yml@main
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -145,7 +145,7 @@ Runs `relctl pr info` + `relctl release create` in one job:
 ```yaml title=".github/workflows/release.yaml"
 jobs:
   release:
-    uses: layer87-labs/relctl-action/.github/workflows/create-release.yml@v1
+    uses: layer87-labs/relctl-action/.github/workflows/create-release.yml@main
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -153,7 +153,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - uses: layer87-labs/relctl-action@v1
+      - uses: layer87-labs/relctl-action@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -164,6 +164,23 @@ jobs:
             --asset "file=out/myapp_${{ needs.release.outputs.version }}_linux-amd64"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+#### `create-release` with CalVer
+
+For repos using CalVer (`.relctl.yaml` or `--version-scheme calver`), the reusable workflow works identically — the versioning is handled inside `relctl`, no workflow changes needed.
+
+```yaml title=".relctl.yaml (in repo root)"
+version_scheme: calver
+```
+
+```yaml title=".github/workflows/release.yaml"
+jobs:
+  release:
+    uses: layer87-labs/relctl-action/.github/workflows/create-release.yml@main
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+  # ... publish as usual
 ```
 
 Available outputs: `release-id`, `sha`, `sha-short`, `owner`, `repo`, `version`, `latest-version`, `next-version`.
@@ -191,7 +208,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: layer87-labs/relctl-action@v1
+      - uses: layer87-labs/relctl-action@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -231,7 +248,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: layer87-labs/relctl-action@v1
+      - uses: layer87-labs/relctl-action@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 

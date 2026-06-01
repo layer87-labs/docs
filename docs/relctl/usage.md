@@ -9,11 +9,33 @@ The most frequently used `relctl` commands. See [CLI Reference](./cli/index.md) 
 
 ## Create a release
 
+### SemVer (default)
+
 ```bash
 relctl release create --merge-sha <sha>
 ```
 
-Reads the current PR's branch name, computes the next SemVer version, and creates a draft GitHub Release. Run this as the first step after a merge.
+Reads the merged PR's branch name, computes the next SemVer version, and creates a draft GitHub Release.
+
+### CalVer
+
+```bash
+# Via flag
+relctl release create --version-scheme calver
+
+# Via .relctl.yaml in the repo root
+# version_scheme: calver
+relctl release create
+```
+
+No branch prefix or PR context required. The version is derived from today's date (UTC) and local git tags: `YYYY.MM.DD.N`. N increments automatically each time you release on the same day.
+
+### Dry run
+
+```bash
+relctl release create --dry-run --merge-sha <sha>
+relctl release create --version-scheme calver --dry-run
+```
 
 ## Publish a release with assets
 

@@ -7,9 +7,19 @@ title: Installation
 
 ## Prerequisites
 
-- Kubernetes 1.26+
+- Kubernetes 1.26+ (1.30+ if you plan to deploy the `ValidatingAdmissionPolicy`
+  from [Hardening](./hardening) — recommended for any real deployment)
 - `kubectl` configured with cluster access
 - Helm 3.x (operator install only)
+
+## Compatibility
+
+Identity is resolved entirely through the Kubernetes `SelfSubjectReview` API,
+which is populated by the API server from whatever authenticator validated
+the request. kube-escalate does not talk to your identity provider directly,
+so it works unchanged with **any** authenticator the API server trusts:
+Keycloak, Microsoft Entra ID, Okta, Dex, a generic OIDC issuer, or plain X.509
+client certificates.
 
 ---
 
@@ -36,6 +46,7 @@ kubectl -n kube-escalate get pods -l app.kubernetes.io/name=kube-escalate
 | `image.tag` | Chart `appVersion` | Override the operator image tag |
 | `replicaCount` | `1` | Set to `2` with `leaderElection.enabled=true` for HA |
 | `leaderElection.enabled` | `true` | Required when `replicaCount > 1` |
+| `maxDuration` | `24h` | Operator-enforced ceiling on any requested TTL — requests beyond it are clamped, never rejected |
 | `metrics.serviceMonitor.enabled` | `false` | Create a Prometheus Operator `ServiceMonitor` |
 | `networkPolicy.enabled` | `false` | Restrict ingress/egress to operator pods |
 | `podDisruptionBudget.enabled` | `false` | Enable when `replicaCount > 1` |
@@ -106,41 +117,97 @@ Krew publication is planned after the first stable release.
 
 ## RBAC prerequisites
 
-### Plugin user
+**Installing the operator does nothing by itself.** The operator only
+enforces TTLs on bindings that already exist — it never grants anyone
+permission to create one. Until you grant RBAC to a group or user, nobody can
+invoke `kubectl escalate` at all (`kubectl auth can-i create
+clusterrolebindings` will say no for everyone except existing cluster-admins).
 
-The user running `kubectl escalate` needs:
+kube-escalate itself keeps no allow-list of who may escalate to what. **The
+entire security boundary is native Kubernetes RBAC** — specifically:
+
+- `create` on `clusterrolebindings` / `rolebindings` lets a user create a
+  binding at all.
+- The `bind` verb, scoped with `resourceNames` to specific ClusterRoles or
+  Roles, lets a user reference a role whose permissions they don't already
+  hold. Without `bind` (or without already holding the target role's own
+  permissions), Kubernetes' own RBAC privilege-escalation check rejects the
+  `Create` before kube-escalate's operator is ever involved.
+
+Nothing here is enforced or interpreted by kube-escalate — it is exactly the
+same `bind`/`escalate` mechanism the Kubernetes API server applies to any RBAC
+object, from any client.
+
+### Example: grant a group the ability to escalate to `cluster-admin`
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: kube-escalate-user
+  name: kube-escalate-requester
 rules:
-  # Resolve identity via SelfSubjectReview (tamper-proof OIDC identity).
+  # Resolve identity via SelfSubjectReview (tamper-proof identity, not
+  # provider-specific — see Compatibility above). Usually already granted to
+  # system:authenticated via the built-in system:basic-user role; restated
+  # here so this grant is self-contained.
   - apiGroups: ["authentication.k8s.io"]
     resources: ["selfsubjectreviews"]
     verbs: ["create"]
 
-  # Create cluster-wide escalations.
+  # Create escalation bindings, and list/revoke one's own via
+  # `kubectl escalate status` / `revoke`.
   - apiGroups: ["rbac.authorization.k8s.io"]
-    resources: ["clusterrolebindings"]
-    verbs: ["create"]
+    resources: ["clusterrolebindings", "rolebindings"]
+    verbs: ["create", "get", "list", "watch", "delete"]
 
-  # Create namespace-scoped escalations (only needed for --namespace usage).
+  # The escalation privilege itself: permits referencing this specific
+  # ClusterRole in a binding without already holding its permissions.
+  # Add more resourceNames to allow escalating to other roles too.
   - apiGroups: ["rbac.authorization.k8s.io"]
-    resources: ["rolebindings"]
-    verbs: ["create"]
+    resources: ["clusterroles"]
+    resourceNames: ["cluster-admin"]
+    verbs: ["bind"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kube-escalate-requester
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-escalate-requester
+subjects:
+  - kind: Group
+    name: <your-oidc-group>
+    apiGroup: rbac.authorization.k8s.io
 ```
 
-For `kubectl escalate status --all` and `kubectl escalate revoke --all`, additionally:
+For namespace-scoped escalation (`kubectl escalate --namespace`), grant `bind`
+on specific `Role` names instead:
 
 ```yaml
   - apiGroups: ["rbac.authorization.k8s.io"]
-    resources: ["clusterrolebindings", "rolebindings"]
-    verbs: ["list", "delete"]
+    resources: ["roles"]
+    resourceNames: ["edit"]
+    verbs: ["bind"]
 ```
+
+:::danger This grant alone is not enough
+`create` on `clusterrolebindings` cannot be scoped by `resourceNames` — the
+object doesn't exist yet at authorization time. Without an additional guard,
+a member of this group could create an **unmanaged** binding (no
+`kube-escalate/managed` label, no expiry — a permanent grant) or bind a
+different subject entirely, bypassing kube-escalate altogether while still
+only using RBAC you granted for JIT access.
+
+Read [Hardening](./hardening) and deploy the `ValidatingAdmissionPolicy`
+there alongside this grant. Do not treat the RBAC grant above as sufficient
+on its own for any cluster used by real people.
+:::
 
 ### Operator
 
 Installed automatically by the Helm chart.
-See [`deploy/helm/templates/clusterrole.yaml`](https://github.com/layer87-labs/kube-escalate/blob/main/deploy/helm/templates/clusterrole.yaml).
+See [`deploy/helm/templates/clusterrole.yaml`](https://github.com/layer87-labs/kube-escalate/blob/main/deploy/helm/templates/clusterrole.yaml)
+— it grants only `get/list/watch/update/patch/delete` on bindings; the
+operator can never *create* one.

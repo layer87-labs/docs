@@ -10,7 +10,10 @@ kubectl escalate [flags]
 ```
 
 Create a time-limited privilege escalation. Your identity is resolved via the
-Kubernetes `SelfSubjectReview` API — it cannot be supplied or forged via CLI arguments.
+Kubernetes `SelfSubjectReview` API — it cannot be supplied or forged via CLI
+arguments. This works the same regardless of how you authenticated to the
+cluster (OIDC, X.509 client certs, or any other authenticator the API server
+trusts) — see [Compatibility](../installation#compatibility).
 
 Cluster-wide (`--namespace` omitted) creates a `ClusterRoleBinding`.
 Namespace-scoped (`--namespace <ns>`) creates a `RoleBinding`.
@@ -52,4 +55,12 @@ The plugin writes the following annotations to the created binding:
 | `kube-escalate/expires-at` | RFC3339 expiry timestamp |
 | `kube-escalate/requester` | Username from `SelfSubjectReview` |
 | `kube-escalate/reason` | Value of `--reason` |
-| `kube-escalate/original-groups` | OIDC groups from `SelfSubjectReview` |
+| `kube-escalate/original-groups` | Groups from `SelfSubjectReview` |
+
+:::info Requesting more than `maxDuration` doesn't fail
+There is no client-side validation against the operator's ceiling. If
+`--duration` exceeds the operator's `maxDuration`, the binding is still
+created — the operator clamps the effective expiry on its first reconcile
+and emits an `EscalationClamped` event. See
+[Known limitations](../usage#known-limitations).
+:::

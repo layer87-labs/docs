@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 title: Helm Chart
 ---
 
@@ -35,6 +35,7 @@ helm install kube-escalate oci://ghcr.io/layer87-labs/charts/kube-escalate \
 | `strategy.rollingUpdate.maxSurge` | `1` | Max surge during rollout |
 | `terminationGracePeriodSeconds` | `10` | Grace period for in-flight reconciles |
 | `leaderElection.enabled` | `true` | Enable leader election (required when `replicaCount > 1`) |
+| `maxDuration` | `24h` | Operator-enforced ceiling on any requested escalation TTL (Go duration string). Requests exceeding it are clamped to `CreationTimestamp + maxDuration`, never rejected — see [Architecture](./architecture#why-expires-at-is-never-rewritten). |
 
 ### Security
 

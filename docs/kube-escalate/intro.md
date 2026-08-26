@@ -9,14 +9,18 @@ Just-in-Time privilege escalation for Kubernetes. Grant temporary, time-limited 
 access with automatic expiry, a full audit trail via Kubernetes Events,
 and Prometheus metrics — no CRDs, no database, no external dependencies.
 
+Instead of standing `cluster-admin` for anyone who might occasionally need it,
+users request an elevated role for a bounded window. The role is removed
+automatically when the window closes.
+
 ## Is this for you?
 
 | ✅ Good fit | ❌ Not a fit |
 | --- | --- |
 | You need temporary `cluster-admin` access without a permanent binding | You need multi-person approval workflows |
-| Your cluster uses OIDC (Okta, Zitadel, Google, …) | You want a Web UI or dashboard |
-| You want automatic expiry enforced by the cluster, not a calendar reminder | You need Kubernetes < 1.26 |
-| You want a full audit trail without an external log store | You need GitLab or Azure DevOps integration |
+| Your cluster's API server trusts OIDC, X.509 client certs, or any other authenticator | You want a Web UI or dashboard |
+| You want automatic expiry enforced by the cluster, not a calendar reminder | You need per-role or per-user TTL policy (v1 enforces one global ceiling) |
+| You want a full audit trail without an external log store *for events alone* | You need Kubernetes < 1.26 |
 | You run Kubernetes on any distribution (RKE2, EKS, GKE, AKS, …) | |
 
 ## Quickstart
@@ -39,37 +43,54 @@ kubectl escalate \
   --reason "Deploying CNPG update"
 ```
 
-Merge the window when you are done — or wait for automatic expiry.
+Revoke the escalation when you are done — or wait for automatic expiry.
+
+:::warning Installing the operator alone grants nothing
+The operator only enforces the TTL on bindings that already exist — it never
+grants anyone the ability to create one. Before anyone can run
+`kubectl escalate`, you must give them RBAC to do so, and you should install
+the hardening `ValidatingAdmissionPolicy` alongside it. Both are covered in
+[RBAC prerequisites](./installation#rbac-prerequisites) and
+[Hardening](./hardening) — read those before rolling this out to real users.
+:::
 
 ## How it works
 
-The plugin creates a standard `ClusterRoleBinding` annotated with an expiry timestamp
-and your verified OIDC identity. The operator watches these bindings and deletes them
-once the TTL elapses.
-
-Your identity comes from the Kubernetes `SelfSubjectReview` API — the API server
-populates it from your validated token. **It cannot be forged via CLI arguments.**
+1. The plugin calls the Kubernetes `SelfSubjectReview` API to resolve your
+   identity. The API server populates the response from your validated
+   token — **it cannot be forged via CLI arguments.**
+2. The plugin creates a standard `ClusterRoleBinding` (cluster-wide) or
+   `RoleBinding` (with `--namespace`), labelled `kube-escalate/managed=true`
+   and annotated with the expiry timestamp, your identity, and your reason.
+   The binding grants the role immediately.
+3. The operator watches every object carrying that label, enforces a TTL
+   ceiling, deletes the binding on expiry, and emits Kubernetes Events and
+   Prometheus metrics for every lifecycle transition.
 
 ```
-kubectl escalate ──► SelfSubjectReview ──► ClusterRoleBinding
-                      (verified OIDC)         expires-at annotation
+kubectl escalate ──► SelfSubjectReview ──► ClusterRoleBinding / RoleBinding
+                      (verified identity)     kube-escalate/managed=true
+                                               expires-at annotation
                                                        │
                                               operator reconciler
-                                              deletes on TTL expiry
-                                              emits Kubernetes Event
+                                              enforces the TTL ceiling
+                                              deletes on expiry
+                                              emits Kubernetes Events
 ```
 
 ## Feature overview
 
 | Feature | Details |
 | --- | --- |
-| **Tamper-proof identity** | Caller resolved via `SelfSubjectReview` — API server verifies the OIDC token |
-| **Automatic expiry** | Operator requeues at exactly `expiresAt + 1 s`; no polling gap |
+| **Tamper-proof identity** | Caller resolved via `SelfSubjectReview` — API server verifies the token, identity can't be supplied by the caller |
+| **Automatic expiry** | Operator requeues at exactly the effective expiry instant; no polling gap |
+| **TTL ceiling** | Operator clamps any requested expiry beyond `maxDuration` (default `24h`), cluster-wide |
 | **Finalizer lifecycle** | Distinguishes TTL expiry from manual revocation; correct metrics and events in both cases |
-| **Kubernetes Events** | `Warning/EscalationExpired` and `Normal/EscalationRevoked` emitted on every lifecycle change |
-| **Prometheus metrics** | `active_escalations`, `escalations_total`, `expired_total`, `revoked_total`, `duration_seconds` |
+| **Kubernetes Events** | `EscalationExpired`, `EscalationRevoked`, `EscalationClamped` emitted on every lifecycle change |
+| **Prometheus metrics** | `active_escalations` gauge, `escalations_total`, `expired_total`, `revoked_total`, `duration_seconds` |
 | **No CRD** | Uses standard `ClusterRoleBinding` / `RoleBinding` — works on any CNCF-conformant cluster |
 | **No database** | All state lives in Kubernetes etcd |
+| **Provider-agnostic identity** | Works with any OIDC provider, or X.509 client certs, trusted by the API server |
 | **HA operator** | Leader election, `PodDisruptionBudget`, configurable replica count |
 | **Namespace-scoped** | `--namespace <ns>` creates a `RoleBinding` instead of a `ClusterRoleBinding` |
 
@@ -77,9 +98,13 @@ kubectl escalate ──► SelfSubjectReview ──► ClusterRoleBinding
 
 | Component | Description |
 | --- | --- |
-| **Operator** | controller-runtime `Deployment` — watches managed bindings, enforces TTL |
+| **Operator** | controller-runtime `Deployment` — watches managed bindings, enforces the TTL ceiling |
 | **`kubectl-escalate`** | kubectl plugin — `escalate`, `status`, `revoke` subcommands |
 | **Helm chart** | Installs the operator with RBAC, probes, metrics, PDB, NetworkPolicy |
+
+kube-escalate ships no admission webhook, CRD, or database. The security
+boundary is native Kubernetes RBAC, optionally hardened with a
+`ValidatingAdmissionPolicy` — see [Hardening](./hardening).
 
 ## Links
 

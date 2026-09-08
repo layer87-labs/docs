@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 title: escalate
 ---
 
@@ -57,7 +57,7 @@ The plugin writes the following annotations to the created binding:
 | `kube-escalate/reason` | Value of `--reason` |
 | `kube-escalate/original-groups` | Groups from `SelfSubjectReview` |
 
-:::info Requesting more than `maxDuration` doesn't fail
+:::info[Requesting more than `maxDuration` doesn't fail]
 There is no client-side validation against the operator's ceiling. If
 `--duration` exceeds the operator's `maxDuration`, the binding is still
 created — the operator clamps the effective expiry on its first reconcile

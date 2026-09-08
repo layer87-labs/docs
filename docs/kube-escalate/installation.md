@@ -65,49 +65,95 @@ the API server" in a way that survives Cilium's eBPF DNAT. Use a
 
 ## Plugin (`kubectl-escalate`)
 
-The plugin runs on your local machine and creates escalated bindings using your cluster credentials.
+The plugin is **client-side**: it runs on a workstation, not in the cluster.
+Deploying the operator installs nothing for your users — each person installs
+this themselves.
+
+Releases ship **plain, versioned binaries**. There is no archive to unpack.
+
+Anything on your `PATH` named `kubectl-escalate` is picked up by `kubectl` as
+`kubectl escalate`.
 
 ### Linux — amd64
 
 ```bash
-curl -Lo kubectl-escalate.tar.gz \
-  https://github.com/layer87-labs/kube-escalate/releases/latest/download/kubectl-escalate_linux_amd64.tar.gz
-tar xf kubectl-escalate.tar.gz kubectl-escalate
-chmod +x kubectl-escalate
-sudo mv kubectl-escalate /usr/local/bin/
-```
+VERSION=0.5.0
+mkdir -p ~/.local/bin
 
-### macOS — Apple Silicon
+gh release download "$VERSION" --repo layer87-labs/kube-escalate \
+  --pattern "kubectl-escalate_${VERSION}_linux-amd64" \
+  --pattern 'sha256sum.txt'
 
-```bash
-curl -Lo kubectl-escalate.tar.gz \
-  https://github.com/layer87-labs/kube-escalate/releases/latest/download/kubectl-escalate_darwin_arm64.tar.gz
-tar xf kubectl-escalate.tar.gz kubectl-escalate
-chmod +x kubectl-escalate
-sudo mv kubectl-escalate /usr/local/bin/
-```
+grep "kubectl-escalate_${VERSION}_linux-amd64$" sha256sum.txt | sha256sum -c -
 
-### macOS — Intel
-
-```bash
-curl -Lo kubectl-escalate.tar.gz \
-  https://github.com/layer87-labs/kube-escalate/releases/latest/download/kubectl-escalate_darwin_amd64.tar.gz
-tar xf kubectl-escalate.tar.gz kubectl-escalate
-chmod +x kubectl-escalate
-sudo mv kubectl-escalate /usr/local/bin/
-```
-
-### Windows — amd64
-
-Download `kubectl-escalate_windows_amd64.zip` from the
-[latest release](https://github.com/layer87-labs/kube-escalate/releases/latest),
-extract `kubectl-escalate.exe`, and place it on your `PATH`.
-
-### Verify
-
-```bash
+install -m 0755 "kubectl-escalate_${VERSION}_linux-amd64" ~/.local/bin/kubectl-escalate
 kubectl escalate --version
 ```
+
+Without the `gh` CLI, replace the download step:
+
+```bash
+BASE=https://github.com/layer87-labs/kube-escalate/releases/download/$VERSION
+curl -fLO "$BASE/kubectl-escalate_${VERSION}_linux-amd64"
+curl -fLO "$BASE/sha256sum.txt"
+```
+
+`curl -f` matters. Without it a 404 response body is written to the output
+file and you "install" an HTML error page.
+
+### Other platforms
+
+Only the asset suffix changes.
+
+| Platform | Suffix |
+|---|---|
+| Linux arm64 | `linux-arm64` |
+| macOS Apple Silicon | `darwin-arm64` |
+| macOS Intel | `darwin-amd64` |
+| Windows amd64 | `windows-amd64.exe` |
+
+macOS quarantines downloaded binaries:
+
+```bash
+xattr -d com.apple.quarantine ~/.local/bin/kubectl-escalate 2>/dev/null || true
+```
+
+On Windows, place `kubectl-escalate.exe` anywhere on `PATH`.
+
+:::danger Always verify the checksum
+A download that stops early leaves a **valid ELF binary** that segfaults with
+exit code 139 on every invocation and prints **nothing at all**. It is
+indistinguishable from a broken release build, and it will cost you an hour
+before you think to compare file sizes.
+
+`sha256sum -c` turns that into a one-line `FAILED`.
+:::
+
+### Verifying the signature (optional)
+
+Binaries are signed with [cosign](https://github.com/sigstore/cosign),
+keyless via GitHub OIDC.
+
+:::warning `gh attestation verify` does not work here
+The `.bundle` files are **cosign** bundles produced by `cosign sign-blob`, not
+GitHub provenance attestations. `gh attestation verify` fails against them
+with a 404 from the attestation API. Use `cosign` instead.
+:::
+
+```bash
+gh release download "$VERSION" --repo layer87-labs/kube-escalate \
+  --pattern "kubectl-escalate_${VERSION}_linux-amd64.bundle"
+
+cosign verify-blob \
+  --bundle "kubectl-escalate_${VERSION}_linux-amd64.bundle" \
+  --certificate-identity-regexp '^https://github\.com/layer87-labs/kube-escalate/\.github/workflows/release\.yaml@refs/heads/main$' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+  "kubectl-escalate_${VERSION}_linux-amd64"
+```
+
+Expected output: `Verified OK`.
+
+Each binary also ships an SPDX SBOM (`*.sbom.spdx.json`).
 
 :::info Krew
 Krew publication is planned after the first stable release.
@@ -154,6 +200,19 @@ rules:
     resources: ["selfsubjectreviews"]
     verbs: ["create"]
 
+  # Answer "kubectl escalate targets". Same situation as above: already held
+  # by every authenticated user, restated for self-containment.
+  - apiGroups: ["authorization.k8s.io"]
+    resources: ["selfsubjectrulesreviews"]
+    verbs: ["create"]
+
+  # Optional: lets "targets" display the enforced max duration. Without it
+  # the column is simply omitted.
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: ["kube-escalate-config"]
+    verbs: ["get"]
+
   # Create escalation bindings, and list/revoke one's own via
   # `kubectl escalate status` / `revoke`.
   - apiGroups: ["rbac.authorization.k8s.io"]
@@ -180,6 +239,39 @@ subjects:
   - kind: Group
     name: <your-oidc-group>
     apiGroup: rbac.authorization.k8s.io
+```
+
+### Verify the group name — the mistake everyone makes first
+
+`<your-oidc-group>` must match the group **as the API server sees it**,
+including any prefix your OIDC configuration adds. Getting this wrong produces
+**no error at install time**. Everything looks healthy and nobody can escalate,
+which you discover during an incident.
+
+```bash
+kubectl auth whoami -o jsonpath='{.status.userInfo.groups}'
+```
+
+Compare that output against the `name:` in the `ClusterRoleBinding` above, then
+confirm from a user's side:
+
+```bash
+kubectl escalate targets
+```
+
+If that prints *"You may not escalate to any role"*, the grant is not reaching
+you — the group name is the first thing to check.
+
+### Target roles must already exist
+
+kube-escalate never creates the roles you escalate **to**. `cluster-admin` is
+built in; anything custom is yours to create beforehand.
+
+Optionally annotate one so `kubectl escalate targets` can explain it:
+
+```bash
+kubectl annotate clusterrole cluster-admin \
+  kube-escalate/description="full cluster access — use sparingly"
 ```
 
 For namespace-scoped escalation (`kubectl escalate --namespace`), grant `bind`

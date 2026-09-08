@@ -30,13 +30,17 @@ automatically when the window closes.
 helm install kube-escalate oci://ghcr.io/layer87-labs/charts/kube-escalate \
   --namespace kube-escalate --create-namespace
 
-# 2. Install the plugin (Linux amd64)
-curl -Lo kubectl-escalate.tar.gz \
-  https://github.com/layer87-labs/kube-escalate/releases/latest/download/kubectl-escalate_linux_amd64.tar.gz
-tar xf kubectl-escalate.tar.gz kubectl-escalate
-chmod +x kubectl-escalate && sudo mv kubectl-escalate /usr/local/bin/
+# 2. Install the plugin (Linux amd64) — a client-side binary, no archive
+VERSION=0.5.0
+gh release download "$VERSION" --repo layer87-labs/kube-escalate \
+  --pattern "kubectl-escalate_${VERSION}_linux-amd64" --pattern 'sha256sum.txt'
+grep "kubectl-escalate_${VERSION}_linux-amd64$" sha256sum.txt | sha256sum -c -
+install -m 0755 "kubectl-escalate_${VERSION}_linux-amd64" ~/.local/bin/kubectl-escalate
 
-# 3. Escalate for 1 hour
+# 3. See where you may escalate to
+kubectl escalate targets
+
+# 4. Escalate for 1 hour
 kubectl escalate \
   --to cluster-admin \
   --duration 1h \

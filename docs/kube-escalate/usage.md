@@ -1,9 +1,29 @@
 ---
-sidebar_position: 4
+sidebar_position: 5
 title: Usage
 ---
 
 # Usage
+
+## Targets
+
+Before escalating, see what you are allowed to escalate to:
+
+```bash
+kubectl escalate targets
+```
+
+```
+TARGET          SCOPE     MAX DURATION   DESCRIPTION
+cluster-admin   cluster   8h0m0s         full cluster access — use sparingly
+```
+
+The list is the API server's own evaluation of your permissions, so it is
+correct however your cluster's RBAC is arranged. Full details, including what
+to do when it reports no targets, are in the
+[CLI reference](./cli/targets).
+
+---
 
 ## Escalate (default action)
 
@@ -216,6 +236,37 @@ increase(kube_escalate_revoked_total[1h])
 rate(kube_escalate_duration_seconds_sum[1h])
   / rate(kube_escalate_duration_seconds_count[1h]) / 60
 ```
+
+---
+
+## Two things that surprise people
+
+### Expiry gives no warning
+
+Access ends silently — the next `kubectl` call simply returns `Forbidden`. In
+the middle of a repair that is genuinely disorienting.
+
+```bash
+kubectl escalate status    # remaining time
+```
+
+There is no renew command by design. Request a new escalation with a fresh
+reason, so the trail records a decision rather than a drift.
+
+### Even while escalated, you may not be able to create ordinary RBAC
+
+If you deployed the [hardening](./hardening) policy, it matches on your
+**group**, not on your role. Escalating grants you `cluster-admin` but does not
+change the groups in your token — so you remain constrained: every binding you
+create must be kube-escalate-managed, carry an expiry, and name you as its
+subject.
+
+This is deliberate. That policy is exactly what stops an escalation from being
+converted into permanent access; exempting escalated users would defeat it.
+
+Change RBAC through your infrastructure-as-code instead, which runs as
+`system:masters` and is exempt from the policy. Somebody who does not know this
+will look in the wrong place at three in the morning.
 
 ---
 

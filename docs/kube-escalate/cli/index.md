@@ -22,6 +22,7 @@ kubectl-escalate [command]
 
 | Command | Description |
 | --- | --- |
+| [`kubectl escalate targets`](targets) | Show which roles you may escalate to |
 | [`kubectl escalate`](escalate) | Create a time-limited escalation (default action) |
 | [`kubectl escalate status`](status) | List active escalations |
 | [`kubectl escalate revoke`](revoke) | Delete active escalations before TTL elapses |

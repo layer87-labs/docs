@@ -35,7 +35,7 @@ eike@layer87.de         editor          ns/tenant-acme     2026-05-24T15:30:00Z 
 | `EXPIRES AT` | RFC3339 expiry timestamp, as originally requested |
 | `REMAINING` | Time until expiry, or `EXPIRED` if past the deadline |
 
-:::info EXPIRES AT may not be the real expiry
+:::info[EXPIRES AT may not be the real expiry]
 `status` reads the `kube-escalate/expires-at` annotation exactly as written
 by the plugin. If a request exceeded the operator's `maxDuration` ceiling,
 the operator enforces a shorter, clamped expiry but never rewrites this

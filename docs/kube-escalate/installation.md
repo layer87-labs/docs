@@ -120,7 +120,7 @@ xattr -d com.apple.quarantine ~/.local/bin/kubectl-escalate 2>/dev/null || true
 
 On Windows, place `kubectl-escalate.exe` anywhere on `PATH`.
 
-:::danger Always verify the checksum
+:::danger[Always verify the checksum]
 A download that stops early leaves a **valid ELF binary** that segfaults with
 exit code 139 on every invocation and prints **nothing at all**. It is
 indistinguishable from a broken release build, and it will cost you an hour
@@ -134,7 +134,7 @@ before you think to compare file sizes.
 Binaries are signed with [cosign](https://github.com/sigstore/cosign),
 keyless via GitHub OIDC.
 
-:::warning `gh attestation verify` does not work here
+:::warning[`gh attestation verify` does not work here]
 The `.bundle` files are **cosign** bundles produced by `cosign sign-blob`, not
 GitHub provenance attestations. `gh attestation verify` fails against them
 with a 404 from the attestation API. Use `cosign` instead.
@@ -155,7 +155,7 @@ Expected output: `Verified OK`.
 
 Each binary also ships an SPDX SBOM (`*.sbom.spdx.json`).
 
-:::info Krew
+:::info[Krew]
 Krew publication is planned after the first stable release.
 :::
 
@@ -284,7 +284,7 @@ on specific `Role` names instead:
     verbs: ["bind"]
 ```
 
-:::danger This grant alone is not enough
+:::danger[This grant alone is not enough]
 `create` on `clusterrolebindings` cannot be scoped by `resourceNames` — the
 object doesn't exist yet at authorization time. Without an additional guard,
 a member of this group could create an **unmanaged** binding (no

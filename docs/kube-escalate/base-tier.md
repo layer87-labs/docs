@@ -72,7 +72,7 @@ rules:
 Letting `view` do the work means the role keeps up with Kubernetes instead of
 drifting as resources are added.
 
-:::tip Verify rather than assume
+:::tip[Verify rather than assume]
 ```bash
 kubectl auth can-i list secrets --as-group=example:cluster-reader --all-namespaces
 ```

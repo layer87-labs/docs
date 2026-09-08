@@ -67,7 +67,7 @@ The Helm chart renders a `kube-escalate-config` ConfigMap from its
 The column is dropped — never guessed — when the ConfigMap is absent (an older
 chart), unreadable (you lack `get` on it), or malformed.
 
-:::warning A wrong number here would be worse than none
+:::warning[A wrong number here would be worse than none]
 A request beyond the ceiling is **not rejected**. It is treated as expiring at
 `CreationTimestamp + maxDuration`, with an `EscalationClamped` event. Someone
 shown an inflated figure would plan around a deadline that will not hold —

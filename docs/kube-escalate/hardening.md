@@ -226,7 +226,7 @@ staged.
 
 ## What this does not protect against
 
-:::danger An escalation to `cluster-admin` is not containment
+:::danger[An escalation to `cluster-admin` is not containment]
 Everything on this page constrains how a grant is *obtained*. None of it
 constrains what the holder does once they have it.
 

@@ -49,7 +49,7 @@ kubectl escalate \
 
 Revoke the escalation when you are done — or wait for automatic expiry.
 
-:::warning Installing the operator alone grants nothing
+:::warning[Installing the operator alone grants nothing]
 The operator only enforces the TTL on bindings that already exist — it never
 grants anyone the ability to create one. Before anyone can run
 `kubectl escalate`, you must give them RBAC to do so, and you should install

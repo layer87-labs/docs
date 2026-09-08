@@ -77,7 +77,7 @@ eike@layer87.de         cluster-admin   cluster            2026-05-24T16:00:00Z 
 eike@layer87.de         editor          ns/tenant-acme     2026-05-24T15:30:00Z  25m0s
 ```
 
-:::info EXPIRES AT may not be the real expiry
+:::info[EXPIRES AT may not be the real expiry]
 `status` reads the `kube-escalate/expires-at` annotation as originally
 written by the plugin. If your request exceeded the operator's `maxDuration`
 ceiling, the operator clamps the *effective* expiry but deliberately never
@@ -174,7 +174,7 @@ kubectl get events.events.k8s.io -A \
   --sort-by='.eventTime'
 ```
 
-:::danger Kubernetes Events expire in about an hour
+:::danger[Kubernetes Events expire in about an hour]
 Kubernetes retains Events for roughly one hour (the exact TTL is controlled
 by the API server's `--event-ttl` flag) before garbage-collecting them. They
 are useful for real-time / near-real-time troubleshooting, but they are

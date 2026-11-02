@@ -110,12 +110,11 @@ Jenkins environment variables are listed at `${YOUR_JENKINS_HOST}/env-vars.html`
 
 ## Persistent connection (non-CI use)
 
-For local use or Jenkins pipelines without environment variable support, use `relctl connect` to create an encrypted `.rc` file:
+For local use, or for pipelines relctl cannot detect (for example GitLab CI with a GitHub repository), use `relctl connect` once. It verifies the connection and writes `.relctl-connection.yaml` with the server and the repository. The token is not stored; set `GITHUB_TOKEN` on every call.
 
 ```bash
-relctl connect github \
-  --repository my-org/my-repo \
-  --token ghp_your_token
+export GITHUB_TOKEN=ghp_your_token
+relctl connect github --repository my-org/my-repo
 ```
 
 Verify the connection:
@@ -124,7 +123,7 @@ Verify the connection:
 relctl connect check
 ```
 
-Remove stored credentials:
+Remove the connection file:
 
 ```bash
 relctl connect remove

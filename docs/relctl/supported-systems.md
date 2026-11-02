@@ -29,21 +29,24 @@ Only two CI systems are detected from the environment. For everything else, conn
 | --- | --- | --- |
 | GitHub Actions | `CI=true`, `GITHUB_SERVER_URL`, `GITHUB_REPOSITORY` | `GITHUB_TOKEN` as `env:` |
 | Jenkins | `CI=true`, `JENKINS_URL`, `GIT_URL` | `GITHUB_REPOSITORY` (`owner/repo`) and `GITHUB_TOKEN` |
-| GitLab CI, any other pipeline, your laptop | none (see below) | `relctl connect github --repository owner/repo --token <token>` before the first relctl call |
+| GitLab CI, any other pipeline, your laptop | none (see below) | `relctl connect github --repository owner/repo` once, and `GITHUB_TOKEN` as environment variable on every call |
 
 ### GitLab CI and other pipelines: `relctl connect github`
 
 relctl reads `CI_SERVER_URL`, `CI_PROJECT_URL` and `CI_JOB_TOKEN` as the credentials of a **GitLab** repository, so a GitLab CI job is treated as GitLab source control, which is not supported. If your repository is on GitHub and only the CI is GitLab CI, connect first:
 
 ```bash
-relctl connect github --repository owner/repo --token "$GITHUB_TOKEN"   # writes .awesomerc.yaml
-relctl release create ...
+export GITHUB_TOKEN=...                        # from the secrets of your CI system
+relctl connect github --repository owner/repo   # verifies the connection, writes .relctl-connection.yaml
+relctl release create ...                       # GITHUB_TOKEN must be set here as well
 ```
 
-The connection file is read before the environment is inspected, so this works with and without GitLab's CI variables. The same applies to any other pipeline and to a local shell.
+The connection file is read before the environment is inspected, so this works with and without GitLab's CI variables. The same applies to any other pipeline and to a local shell. Without `GITHUB_TOKEN`, relctl stops with a message that names the variable.
 
-:::caution The connection file is not a safe place for the token
-`.awesomerc.yaml` holds the token obscured with a fixed key that is part of the public source code. Treat the file like a plain token: keep it out of Git (relctl saves the file and then exits with an error unless `.awesomerc.yaml` is a line of its own in the `.gitignore` of the current directory), use a token with minimal scope and a short lifetime, and delete the file when done (`relctl connect remove`).
+:::note The connection file holds no secret
+`.relctl-connection.yaml` contains the server and the repository, nothing else. The token is used to verify the connection and is never written to disk; every call reads it from `GITHUB_TOKEN`. The file may be committed. Use a token with minimal scope and a short lifetime.
+
+A `.awesomerc.yaml` from awesome-ci or from relctl before 2.10 is still read: its token is used when `GITHUB_TOKEN` is not set, and relctl warns. The next `relctl connect github` replaces it with `.relctl-connection.yaml` and deletes the old file, which held the token obscured with a key that is part of the public source code.
 :::
 
 ### Jenkins with GitHub Enterprise
@@ -52,4 +55,4 @@ Jenkins sets `GIT_URL` to the URL of the repository (`https://ghe.example.com/or
 
 ## Release environment variables
 
-Whatever the CI system, relctl exports `RELCTL_VERSION`, `RELCTL_NEXT_VERSION`, `RELCTL_RELEASE_ID`, `RELCTL_LATEST_VERSION` and further variables: to `$GITHUB_ENV` and as step outputs in GitHub Actions, to a file (`awesomeci.env`) elsewhere.
+Whatever the CI system, relctl exports `RELCTL_VERSION`, `RELCTL_NEXT_VERSION`, `RELCTL_RELEASE_ID`, `RELCTL_LATEST_VERSION` and further variables: to `$GITHUB_ENV` and as step outputs in GitHub Actions, to a file (`relctl.env`) elsewhere.

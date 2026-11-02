@@ -42,7 +42,7 @@ grep -rniE 'awesome-ci|awesome_ci|\bACI_[A-Z_]+|aci_(patch_level|version_overrid
   --exclude-dir=.git --exclude-dir=node_modules .
 ```
 
-Also check for `.awesomerc.yaml` (written by `awesome-ci connect`; keep it and make sure it is git-ignored) and for Jenkinsfiles. Write the findings as a short list (file, line, what it is) in your working notes.
+Also check for `.awesomerc.yaml` (written by `awesome-ci connect`; relctl still reads it, and `relctl connect github` replaces it with a token-free `.relctl-connection.yaml`), for scripts that source `awesomeci.env` (relctl writes `relctl.env`), and for Jenkinsfiles. Write the findings as a short list (file, line, what it is) in your working notes.
 
 ### Step 2 — Replace the setup action
 

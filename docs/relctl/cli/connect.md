@@ -5,9 +5,9 @@ title: connect
 
 # relctl connect
 
-Create an encrypted `.rc` file to persistently connect to GitHub or GitHub Enterprise.
+Store server and repository of a GitHub or GitHub Enterprise repository in `.relctl-connection.yaml`.
 
-Useful without a runner or in a Jenkins pipeline where environment variables are not automatically set by the CI system.
+The token is never stored: provide it as `GITHUB_TOKEN` on every call. The file holds no secret. Useful where relctl cannot detect the pipeline (GitLab CI with a GitHub repository, a local shell).
 
 ```bash
 relctl connect [flags]
@@ -26,7 +26,7 @@ relctl connect [flags]
 | --- | --- |
 | `relctl connect github` | Connect to GitHub or GitHub Enterprise |
 | `relctl connect check` | Verify current connection is working |
-| `relctl connect remove` | Remove all persisted connection files and secrets |
+| `relctl connect remove` | Remove the connection file (and a legacy `.awesomerc.yaml`) |
 
 ### connect github
 
@@ -35,9 +35,10 @@ relctl connect github [flags]
 ```
 
 ```
-  -h, --help              help for github
-  -s, --server string     GitHub server URL (default: https://github.com)
-  -t, --token string      GitHub personal access token
+  -h, --help                 help for github
+  -r, --repository string    (required) repository, e.g. octo-org/octo-repo
+  -s, --server string        GitHub server URL (default: https://github.com)
+  -t, --token string         token used to verify the connection, not stored (default: $GITHUB_TOKEN)
 ```
 
 ### connect check

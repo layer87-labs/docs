@@ -68,7 +68,7 @@ The branch must start with an alias followed by a `/`:
 
 | Bump  | Valid examples                          |
 | ----- | --------------------------------------- |
-| MAJOR | `major/my-breaking-change`              |
+| MAJOR | `major/my-breaking-change`, `feat!/drop-old-api` |
 | MINOR | `feature/new-flag`, `feat/something`    |
 | PATCH | `fix/null-ptr`, `bugfix/crash`, `dependabot/...` |
 

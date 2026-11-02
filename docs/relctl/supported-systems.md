@@ -43,7 +43,7 @@ relctl release create ...
 The connection file is read before the environment is inspected, so this works with and without GitLab's CI variables. The same applies to any other pipeline and to a local shell.
 
 :::caution The connection file is not a safe place for the token
-`.awesomerc.yaml` holds the token obscured with a fixed key that is part of the public source code. Treat the file like a plain token: keep it out of Git (relctl warns if it is not in `.gitignore`), use a token with minimal scope and a short lifetime, and delete the file when done (`relctl connect remove`).
+`.awesomerc.yaml` holds the token obscured with a fixed key that is part of the public source code. Treat the file like a plain token: keep it out of Git (relctl saves the file and then exits with an error unless `.awesomerc.yaml` is a line of its own in the `.gitignore` of the current directory), use a token with minimal scope and a short lifetime, and delete the file when done (`relctl connect remove`).
 :::
 
 ### Jenkins with GitHub Enterprise

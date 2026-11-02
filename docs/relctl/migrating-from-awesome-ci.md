@@ -61,15 +61,15 @@ Compatibility mode needs a relctl version that includes it; check the [releases]
 
 ## Direct downloads
 
-If you downloaded the binary from a release page instead of using the action, note that the asset names changed (`relctl_<version>_<os>-<arch>`). Use `relctl-action`, which also verifies the SHA-256 checksum.
+If you downloaded the binary from a release page instead of using the action, point the download at the relctl releases instead. Assets are named `relctl_<version>_<os>-<arch>`. Prefer `relctl-action`, which also verifies the SHA-256 checksum.
 
 ## What you gain
 
 - Three more version schemes besides SemVer: Conventional Commits, CalVer, and a reviewed, changelog-driven flow.
 - Breaking-change branches (`feat!/…`) and Conventional Commit markers produce a MAJOR bump.
-- Idempotent, checksum-verified installation through one maintained action.
+- Checksum-verified installation through one maintained action.
 - A tested code base with up-to-date dependencies and security fixes.
 
 ## Rolling back
 
-Nothing is changed in your repository by relctl except the releases it creates. To roll back, point the workflow at the old action again; draft releases created by relctl use the same format as awesome-ci's.
+relctl changes nothing in your repository except the releases it creates. To roll back, point the workflow at the old action again.

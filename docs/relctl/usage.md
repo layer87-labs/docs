@@ -51,12 +51,11 @@ relctl release publish \
 ## Connect to GitHub (non-CI)
 
 ```bash
-relctl connect github \
-  --repository my-org/my-repo \
-  --token ghp_your_token
+export GITHUB_TOKEN=ghp_your_token
+relctl connect github --repository my-org/my-repo
 ```
 
-Persists an encrypted `.rc` file for local use or Jenkins pipelines without runner-injected credentials.
+Verifies the connection and stores server and repository in `.relctl-connection.yaml`, for local use or pipelines relctl cannot detect. The token is never stored: every later call reads `GITHUB_TOKEN`.
 
 ## Get PR info
 
@@ -82,7 +81,7 @@ relctl release create --dry-run --merge-sha <sha>
 
 ### relctl connect remove
 
-Remove all persisted connection files and secrets.
+Remove the connection file (and a legacy `.awesomerc.yaml`).
 
 ```
 relctl connect remove

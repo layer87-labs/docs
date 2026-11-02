@@ -33,7 +33,7 @@ Yes. Download the binary manually and set the required environment variables:
 - `GITHUB_REPOSITORY` (format: `owner/repo`)
 - `GITHUB_SERVER_URL` (default: `https://github.com`)
 
-For persistent local use, store credentials with `relctl connect github`.
+For local use or pipelines relctl cannot detect, run `relctl connect github` once; it stores server and repository, not the token. Provide `GITHUB_TOKEN` on every call.
 
 ## Does relctl work with GitHub Enterprise?
 
@@ -42,10 +42,10 @@ Yes. Set `GITHUB_SERVER_URL` to your GitHub Enterprise instance URL, e.g. `https
 For `relctl connect`:
 
 ```bash
+export GITHUB_TOKEN=ghp_your_token
 relctl connect github \
   --server https://github.example.com \
-  --repository my-org/my-repo \
-  --token ghp_your_token
+  --repository my-org/my-repo
 ```
 
 ## What happens if I run relctl release create on a push that has no PR?

@@ -152,6 +152,24 @@ relctl release forward --from main --to dev --dry-run
 
 The branches come from [`.relctl.yaml`](./configuration.md) (`production_branch`, `development_branch`). The result is exported as `RELCTL_FORWARD_RESULT` (`nothing`, `fast-forward`, `pull-request`) and `RELCTL_FORWARD_PR`.
 
+## The release text
+
+Every release has a text, whatever the flow:
+
+| Situation | Text |
+| --- | --- |
+| `--body "text"` or `--body notes.md` | exactly that: a string, or the content of a file |
+| `changelog` scheme | the section of the topmost `CHANGELOG.md` heading |
+| otherwise | the notes GitHub generates: the merged pull requests since the last published release |
+
+The generated notes are grouped by the categories of [`.github/release.yml`](https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes#configuring-automatically-generated-release-notes) if the repository has one, which is where a release template belongs. They start after the last *published* release, never after a release candidate, so a candidate and the final release both list everything since the last real release. If GitHub cannot generate the notes, relctl warns and the release is created without text.
+
+`relctl release publish --asset ...` keeps the text and appends the uploaded files as a table:
+
+| File | Size | SHA-256 |
+| --- | ---: | --- |
+| `relctl_2.10.1_linux-amd64` | 14.2 MiB | `…` |
+
 ## Choosing
 
 - Start with **flow 1** if you are coming from awesome-ci — nothing changes except the tool name (see the [migration guide](./migrating-from-awesome-ci.md)).

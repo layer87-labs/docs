@@ -12,7 +12,7 @@ relctl is the successor of [awesome-ci](https://github.com/fullstack-devops/awes
 - Commands and the SemVer-from-branch-prefix model.
 - GitHub, GitHub Enterprise, GitHub Actions and Jenkins as supported environments.
 - Required environment: `CI`, `GITHUB_SERVER_URL`, `GITHUB_REPOSITORY`, `GITHUB_TOKEN`.
-- The `.awesomerc.yaml` file written by `connect` (add it to `.gitignore` as before).
+- The `.awesomerc.yaml` file written by awesome-ci `connect` is still read (its token is used when `GITHUB_TOKEN` is not set). relctl `connect` writes `.relctl-connection.yaml` instead and stores no token; the old file is deleted on the next `relctl connect github`. The file for exported variables in a local shell is now `relctl.env` (was `awesomeci.env`).
 
 ## What changes
 

@@ -22,7 +22,7 @@ relctl [flags]
 
 | Command | Description |
 | --- | --- |
-| `relctl connect` | Create an encrypted `.rc` file to persistently connect to GitHub or GitHub Enterprise |
+| `relctl connect` | Store server and repository of a GitHub or GitHub Enterprise repository in `.relctl-connection.yaml` (no token) |
 | `relctl parse` | Inspect and parse JSON and YAML files |
 | `relctl pr` | Manage GitHub pull requests |
 | `relctl release` | Manage GitHub releases |

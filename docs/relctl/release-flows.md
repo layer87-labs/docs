@@ -136,7 +136,21 @@ sequenceDiagram
     CI-->>Main: relctl release create → 1.4.0 (published)
 ```
 
-Merging `main` back into `dev` after the release is still a manual step (open a pull request and merge it with a merge commit); relctl does not automate it yet.
+### Bringing `main` back into `dev`
+
+After the release, `dev` must get the released state of `main` (the merge commit and the dated changelog heading). `relctl release forward` does that:
+
+```bash
+relctl release forward              # branches from .relctl.yaml
+relctl release forward --from main --to dev --dry-run
+```
+
+- If `dev` already contains `main`, nothing happens.
+- If `dev` is an ancestor of `main`, `dev` is **fast-forwarded**. This needs a token that may push to `dev`; with branch rules that require pull requests only a bypass actor can.
+- Otherwise (the branches diverged, or the push is not allowed) a **pull request** `main` → `dev` is opened. **Merge it with a merge commit, do not squash it**: a squash creates a commit that `main` never had and causes conflicts with the next release.
+- It is idempotent: a second run does not open a second pull request.
+
+The branches come from [`.relctl.yaml`](./configuration.md) (`production_branch`, `development_branch`). The result is exported as `RELCTL_FORWARD_RESULT` (`nothing`, `fast-forward`, `pull-request`) and `RELCTL_FORWARD_PR`.
 
 ## Choosing
 

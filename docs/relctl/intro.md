@@ -11,7 +11,7 @@ Provider-agnostic release management CLI. One binary, zero release boilerplate, 
 
 | ✅ Good fit | ❌ Not a fit |
 | --- | --- |
-| Your team uses branch prefixes like `feature/`, `fix/`, `major/` | You need GitLab, Bitbucket, or Azure DevOps |
+| Your team uses branch prefixes like `feature/`, `fix/`, `major/` | You need GitLab, Bitbucket, or Azure DevOps as source control (GitLab CI as *CI system* works) |
 | You release via GitHub Releases | You want a fully managed SaaS release tool |
 | You build multi-arch binaries in a CI matrix | |
 | You need calendar versioning (`YYYY.MM.DD.N`) | |
@@ -48,7 +48,8 @@ Merge a `feature/my-thing` branch → `relctl` creates a **MINOR** GitHub Releas
 | --- | --- |
 | a **developer** who merges pull requests | [Branch → version mapping](#branch--version-mapping) below, then [Common commands](./usage.md) |
 | a **pipeline maintainer** | [Installation](./installation.md), [Release flows](./release-flows.md), [CI integration](./ci-integration.md) |
-| deciding how versions should be calculated | [Version schemes](./version-schemes.md) |
+| deciding how versions should be calculated | [Version schemes](./version-schemes.md), [Configuration](./configuration.md) |
+| checking whether your CI and source control are supported | [Supported systems](./supported-systems.md) |
 | an **awesome-ci user** | [Migrating from awesome-ci](./migrating-from-awesome-ci.md) |
 
 ## Branch → version mapping

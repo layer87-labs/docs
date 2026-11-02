@@ -14,7 +14,7 @@ flowchart TD
     subgraph branches["Feature branches"]
         b1["bugfix/**"]
         b2["feature/**"]
-        b3["major/**"]
+        b3["major/** or feat!/**"]
     end
 
     branches --> |push to GitHub| openPR(["open Pull Request"])
@@ -30,7 +30,7 @@ flowchart TD
     subgraph prBranch["Merged branch prefix determines bump"]
         pb1["bugfix/** → PATCH"]
         pb2["feature/** → MINOR"]
-        pb3["major/** → MAJOR"]
+        pb3["major/** or feat!/** → MAJOR"]
     end
 ```
 
@@ -55,7 +55,9 @@ permissions:
   pull-requests: write  # post help comment + read override commands
 ```
 
-Without `pull-requests: write` the help comment is silently skipped and no overrides are evaluated.
+Without `pull-requests: write` the help comment cannot be posted (relctl logs a warning and continues). Tokens of pull requests from forks are read-only and cannot comment either.
+
+When you call the reusable workflow `generate-build-infos.yml` from `relctl-action`, the calling workflow must grant `pull-requests: write` — a reusable workflow cannot obtain more permissions than its caller.
 
 ### Disable the help comment
 

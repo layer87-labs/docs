@@ -5,7 +5,7 @@ title: Introduction
 
 # relctl
 
-Provider-agnostic release management CLI — SemVer driven by branch names, or CalVer driven by the date. One binary, zero release boilerplate.
+Provider-agnostic release management CLI. One binary, zero release boilerplate, four version schemes: SemVer from branch names, Conventional Commits, CalVer, or a reviewed changelog. The successor of [awesome-ci](./migrating-from-awesome-ci.md).
 
 ## Is this for you?
 
@@ -41,6 +41,15 @@ jobs:
 ```
 
 Merge a `feature/my-thing` branch → `relctl` creates a **MINOR** GitHub Release draft. Done.
+
+## Where to start
+
+| You are… | Read |
+| --- | --- |
+| a **developer** who merges pull requests | [Branch → version mapping](#branch--version-mapping) below, then [Common commands](./usage.md) |
+| a **pipeline maintainer** | [Installation](./installation.md), [Release flows](./release-flows.md), [CI integration](./ci-integration.md) |
+| deciding how versions should be calculated | [Version schemes](./version-schemes.md) |
+| an **awesome-ci user** | [Migrating from awesome-ci](./migrating-from-awesome-ci.md) |
 
 ## Branch → version mapping
 

@@ -37,7 +37,7 @@ To migrate in two steps instead of one, relctl accepts the old names for a trans
 - Set `RELCTL_LEGACY_ACI_ENV=true` and relctl additionally exports an `ACI_*` alias for every `RELCTL_*` variable, so workflow steps that read `steps.<id>.outputs.ACI_NEXT_VERSION` keep working.
 
 :::note
-Compatibility mode needs a relctl version that includes it; check the [releases](https://github.com/layer87-labs/relctl/releases). It is meant for the transition — remove it when your pipelines use the new names.
+Compatibility mode is available from relctl 2.6.0. It is meant for the transition — remove it when your pipelines use the new names.
 :::
 
 ## Step by step

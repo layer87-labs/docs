@@ -87,8 +87,10 @@ Rules, enforced strictly:
 
 1. refuses an **undated** heading (only released versions are released),
 2. uses the section below the heading as the release notes, unless `--body` is given,
-3. is **idempotent**: if the tag already exists, it exits successfully and creates nothing.
+3. is **idempotent**: if a release (draft or published) or a tag for that version already exists, it exits successfully and creates nothing. An existing draft is reused and its id exported as `RELCTL_RELEASE_ID`.
+
+An explicit `--version` overrides the heading; the release notes are then only taken from the changelog if the topmost heading is that same version.
 
 :::note
-The `changelog` scheme is available in relctl versions that include it. Check `relctl --version` and the [releases](https://github.com/layer87-labs/relctl/releases).
+The `changelog` scheme is available from relctl 2.6.0.
 :::

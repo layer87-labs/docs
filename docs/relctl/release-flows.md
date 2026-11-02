@@ -71,9 +71,72 @@ The release is a deliberate act: a pull request dates the topmost `CHANGELOG.md`
 - Set `version_scheme: changelog`. On `main`, `relctl release create` reads the heading, uses the section as release notes and does nothing if the tag already exists.
 - Keep `## ` headings in `CHANGELOG.md` strictly in the format described in [Version schemes](./version-schemes.md#changelog); the file is machine-read.
 
-:::note Roadmap
-Computed release-candidate numbers (`X.Y.Z-rc.N` from pushes to `dev`), a merge gate that requires a verified candidate, and forward-merging `main` into `dev` are planned as relctl commands. Until then, combine the `changelog` scheme with your own pipeline steps for those parts.
-:::
+### Release candidates
+
+Every push to `dev` can produce a release candidate. `relctl release create --prerelease` creates `X.Y.Z-rc.N`, marked as a GitHub prerelease, for the version in the topmost changelog heading. The heading may still be undated on `dev`.
+
+- `N` is one more than the highest existing candidate of the same version (tags and releases, drafts included). The number is never written into a file.
+- If `X.Y.Z` is already released, no candidate is created and the command succeeds. This keeps a merge back from `main` to `dev` from producing candidates for something that is already out.
+- Candidates are never the base of a SemVer bump.
+
+```bash
+relctl release create --prerelease          # creates a draft 1.4.0-rc.3, prints its id
+relctl release publish --release-id "$RELCTL_RELEASE_ID" --asset "file=dist/app"
+```
+
+Run the full test suite first and create the candidate last: a candidate then means "this commit passed".
+
+### The release gate
+
+`relctl release gate` is the check for the pull request that releases (`dev` → `main`). It passes only if
+
+1. the topmost heading is a valid, **dated** version with release notes,
+2. that version is **not released yet** (no published release, no tag), and
+3. a release candidate tag `X.Y.Z-rc.N` points to **exactly the commit** being released (`--sha`, default `HEAD`). Use `--require-candidate=false` to skip this check.
+
+All checks are always reported; the exit status is non-zero if one fails, so it works as a required status check.
+
+```yaml
+# .github/workflows/release-gate.yml
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0, ref: "${{ github.event.pull_request.head.sha }}" }
+      - uses: layer87-labs/relctl-action@v1
+        with: { github-token: "${{ secrets.GITHUB_TOKEN }}" }
+      - run: relctl release gate --sha "${{ github.event.pull_request.head.sha }}"
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+```
+
+### Putting it together
+
+```mermaid
+sequenceDiagram
+    participant Dev as dev
+    participant CI as Pipeline
+    participant PR as Release PR (dev → main)
+    participant Main as main
+    Dev->>CI: push (heading "## 1.4.0")
+    CI->>CI: tests, then relctl release create --prerelease
+    CI-->>Dev: 1.4.0-rc.1 (prerelease)
+    Dev->>Dev: date the heading "## 1.4.0 — 2026-10-02"
+    Dev->>CI: push
+    CI-->>Dev: 1.4.0-rc.2
+    Dev->>PR: open release PR from dev
+    PR->>PR: relctl release gate --sha HEAD
+    Note over PR: passes: dated, unreleased, rc.2 is this commit
+    PR->>Main: merge (merge commit)
+    Main->>CI: push
+    CI-->>Main: relctl release create → 1.4.0 (published)
+```
+
+Merging `main` back into `dev` after the release is still a manual step (open a pull request and merge it with a merge commit); relctl does not automate it yet.
 
 ## Choosing
 

@@ -91,8 +91,10 @@ Rules, enforced strictly:
 
 The check reads GitHub's list of releases, which can lag by a few seconds after a release is created or published. A rerun within seconds of the first run (for example *Re-run failed jobs*) may therefore not see it yet; reruns a minute later are safe.
 
+`--prerelease` creates release candidates from the heading, see [Release flows](./release-flows.md#release-candidates).
+
 An explicit `--version` overrides the heading; the release notes are then only taken from the changelog if the topmost heading is that same version.
 
 :::note
-The `changelog` scheme is available from relctl 2.6.0.
+The `changelog` scheme is available from relctl 2.6.0; `--prerelease` from 2.7.0 and `relctl release gate` from 2.8.0.
 :::

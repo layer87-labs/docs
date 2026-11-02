@@ -57,7 +57,7 @@ The SemVer bump is derived from the merged branch prefix. The trailing `/` is re
 
 | Bump | Branch prefixes | Example |
 | --- | --- | --- |
-| MAJOR | `major/` | 1.2.3 → 2.0.0 |
+| MAJOR | `major/`, or any prefix ending in `!` (`feat!/`, `fix!/`) | 1.2.3 → 2.0.0 |
 | MINOR | `minor/`, `feature/`, `feat/` | 1.2.3 → 1.3.0 |
 | PATCH | `patch/`, `fix/`, `bugfix/`, `dependabot/` | 1.2.3 → 1.2.4 |
 
@@ -78,7 +78,7 @@ The bump level is derived from the merged branch prefix:
 
 | Bump | Branch prefixes | Example |
 | --- | --- | --- |
-| MAJOR | `major/` | 1.2.3 → 2.0.0 |
+| MAJOR | `major/`, or any prefix ending in `!` (`feat!/`, `fix!/`) | 1.2.3 → 2.0.0 |
 | MINOR | `minor/`, `feature/`, `feat/` | 1.2.3 → 1.3.0 |
 | PATCH | `patch/`, `fix/`, `bugfix/`, `dependabot/` | 1.2.3 → 1.2.4 |
 

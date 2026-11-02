@@ -89,6 +89,8 @@ Rules, enforced strictly:
 2. uses the section below the heading as the release notes, unless `--body` is given,
 3. is **idempotent**: if a release (draft or published) or a tag for that version already exists, it exits successfully and creates nothing. An existing draft is reused and its id exported as `RELCTL_RELEASE_ID`.
 
+The check reads GitHub's list of releases, which can lag by a few seconds after a release is created or published. A rerun within seconds of the first run (for example *Re-run failed jobs*) may therefore not see it yet; reruns a minute later are safe.
+
 An explicit `--version` overrides the heading; the release notes are then only taken from the changelog if the topmost heading is that same version.
 
 :::note

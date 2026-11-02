@@ -18,7 +18,7 @@ When contributing to this repository, please first discuss the change you wish t
 
 | Prefix | SemVer bump |
 | --- | --- |
-| `major/` | Breaking change → MAJOR |
+| `major/` or any prefix ending in `!` (e.g. `feat!/`) | Breaking change → MAJOR |
 | `feature/` or `feat/` or `minor/` | New functionality → MINOR |
 | `fix/` or `bugfix/` or `patch/` | Bug fix → PATCH |
 | `dependabot/` | Dependency update → PATCH |

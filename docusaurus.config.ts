@@ -38,6 +38,8 @@ const config: Config = {
   projectName: 'docs',
 
   onBrokenLinks: 'throw',
+  onBrokenAnchors: 'throw',
+  onDuplicateRoutes: 'throw',
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
@@ -55,7 +57,8 @@ const config: Config = {
   markdown: {
     mermaid: true,
     hooks: {
-      onBrokenMarkdownLinks: 'warn',
+      onBrokenMarkdownLinks: 'throw',
+      onBrokenMarkdownImages: 'throw',
     },
   },
 

@@ -46,7 +46,7 @@ relctl release publish \
   --asset "file=out/myapp_darwin-arm64"
 ```
 
-`RELCTL_RELEASE_ID` is written to `$GITHUB_OUTPUT` by `release create` and can be passed between jobs.
+`RELCTL_RELEASE_ID` is written to `$GITHUB_OUTPUT` by `release create` and can be passed between jobs. It is empty if the release is already published; see [Variables](./release-flows.md#variables).
 
 ## Connect to GitHub (non-CI)
 
@@ -109,6 +109,7 @@ relctl pr info [flags]
 | ------------------------------- | -------------------------------- |
 | `-c, --merge-commit-sha string` | Specify a merge commit SHA        |
 | `-n, --number int`              | Override the pull request number  |
+| `--component string`            | Preview the release of one [component](./release-flows.md#components) |
 
 ---
 
@@ -125,6 +126,7 @@ relctl release [flags]
 | Flag                          | Description                                                      |
 | ----------------------------- | ---------------------------------------------------------------- |
 | `-b, --body string`           | Custom release message — markdown string or path to a file      |
+| `--component string`          | Release one [component](./release-flows.md#components) of the repository |
 | `--dry-run`                   | Simulate without writing to Git                                  |
 | `--hotfix`                    | Create a hotfix release                                          |
 | `--merge-sha string`          | Override the merge commit SHA                                    |
@@ -147,12 +149,7 @@ All shared `release` flags apply.
 
 **Step outputs** (written to `$GITHUB_OUTPUT` in GitHub Actions):
 
-| Variable              | Description                       |
-| --------------------- | --------------------------------- |
-| `RELCTL_NEXT_VERSION` | Computed next version             |
-| `RELCTL_RELEASE_ID`   | GitHub release ID of the draft    |
-| `RELCTL_PR_SHA`       | Full merge commit SHA             |
-| `RELCTL_PR_SHA_SHORT` | Short (7-char) merge commit SHA   |
+`RELCTL_VERSION`, `RELCTL_TAG`, `RELCTL_NEXT_VERSION`, `RELCTL_LATEST_VERSION`, `RELCTL_PRERELEASE`, `RELCTL_COMPONENT` and `RELCTL_RELEASE_ID` are described in [Release flows: Variables](./release-flows.md#variables). `--component NAME` releases one [component](./release-flows.md#components) of the repository.
 
 ### relctl release publish
 

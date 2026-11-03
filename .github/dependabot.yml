@@ -4,8 +4,26 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
     groups:
+      # A dependency lands in the first group that matches it.
+      # All Docusaurus packages are pinned together and must move together, majors included.
+      docusaurus:
+        patterns:
+          - '@docusaurus/*'
+      # React majors stay in their own pull request.
+      react:
+        patterns:
+          - react
+          - react-dom
+          - '@types/react'
+      # Everything else: minor and patch only. Majors (for example TypeScript) are not
+      # matched here, so Dependabot opens a separate pull request for each of them.
       minor-and-patch:
+        patterns:
+          - '*'
         update-types:
           - minor
           - patch
@@ -13,8 +31,13 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
     groups:
       minor-and-patch:
+        patterns:
+          - '*'
         update-types:
           - minor
           - patch

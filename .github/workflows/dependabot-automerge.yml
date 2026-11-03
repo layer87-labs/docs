@@ -1,0 +1,93 @@
+name: Dependabot auto-merge
+
+# Runs from the default branch after the CI workflow finished for a pull request.
+# It never checks out or executes code from the pull request.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  automerge:
+    name: Merge safe Dependabot updates
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]'
+    env:
+      # Optional Dependabot secret (not an Actions secret) holding a token with contents and
+      # pull-requests write access. Without it the workflow token is used.
+      GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN || github.token }}
+      USING_DEFAULT_TOKEN: ${{ secrets.AUTOMERGE_TOKEN == '' }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Find the pull request
+        id: pr
+        run: |
+          # Match on the branch and the exact commit CI ran for, not on a possibly stale list.
+          NUMBER=$(gh pr list --repo "$REPO" --head "$HEAD_BRANCH" --state open \
+            --json number,headRefOid,author \
+            --jq "[.[] | select(.headRefOid == \"$HEAD_SHA\" and (.author.login | test(\"^(app/)?dependabot(\\\\[bot\\\\])?$\")))][0].number // empty")
+          if [ -z "$NUMBER" ]; then
+            echo "No open Dependabot pull request at commit $HEAD_SHA (branch moved on or already merged). Nothing to do."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Read update metadata
+        if: steps.pr.outputs.found == 'true'
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Classify the update
+        if: steps.pr.outputs.found == 'true'
+        id: classify
+        env:
+          UPDATES: ${{ steps.metadata.outputs.updated-dependencies-json }}
+        run: |
+          # Grouped pull requests contain several updates: the safest decision wins.
+          # Only patch and minor are automatic. Major, or anything unknown, needs a human.
+          SAFE=$(echo "$UPDATES" | jq -r 'length > 0 and all(.[]; .updateType == "version-update:semver-patch" or .updateType == "version-update:semver-minor")')
+          echo "updates: $(echo "$UPDATES" | jq -c '[.[] | {dependencyName, updateType}]')"
+          echo "safe=$SAFE" >> "$GITHUB_OUTPUT"
+
+      - name: Merge patch and minor updates
+        if: steps.classify.outputs.safe == 'true'
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          # --match-head-commit: merge only the commit that CI validated.
+          if ! OUT=$(gh pr merge "$PR" --repo "$REPO" --squash --match-head-commit "$HEAD_SHA" 2>&1); then
+            echo "$OUT"
+            echo "::error::Could not merge #$PR: $OUT. Check the branch rules on main (required reviews, required status checks, allowed merge methods) and the token permissions of this workflow."
+            exit 1
+          fi
+          echo "Merged #$PR"
+          # A merge made with the workflow token does not trigger the push workflows, so start the deployment.
+          if [ "$USING_DEFAULT_TOKEN" = "true" ]; then
+            gh workflow run deploy.yaml --repo "$REPO" --ref main
+          fi
+
+      - name: Ask for a human review of major updates
+        if: steps.pr.outputs.found == 'true' && steps.classify.outputs.safe != 'true'
+        env:
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          MARKER='<!-- automerge-major-notice -->'
+          if gh pr view "$PR" --repo "$REPO" --json comments --jq '.comments[].body' | grep -qF "$MARKER"; then
+            echo "Already commented."
+          else
+            gh pr comment "$PR" --repo "$REPO" --body "$MARKER This update contains a major (or unclassified) version change and is not merged automatically: a human must review it."
+          fi

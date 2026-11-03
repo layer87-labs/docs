@@ -54,3 +54,65 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v5
+
+  verify:
+    name: Verify live site
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve site URL from docusaurus.config.ts
+        run: |
+          URL=$(node --no-warnings -e "import('./docusaurus.config.ts').then(m => console.log(new URL(m.default.baseUrl, m.default.url).href))")
+          test -n "$URL"
+          echo "BASE_URL=$URL" >> "$GITHUB_ENV"
+          echo "Checking $URL"
+
+      - name: Wait for the new version to be served
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null "${BASE_URL}sitemap.xml"; then exit 0; fi
+            sleep 10
+          done
+          echo "::error::${BASE_URL}sitemap.xml is not reachable after the deployment."
+          exit 1
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Smoke tests against the live site
+        env:
+          CI: 'true'
+        run: pnpm run test:smoke
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-live
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+          if-no-files-found: ignore

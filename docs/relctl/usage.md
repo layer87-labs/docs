@@ -5,7 +5,7 @@ title: Common commands
 
 # Common commands
 
-The most frequently used `relctl` commands. See [CLI Reference](./cli/index.md) for all flags and subcommands.
+The most frequently used `relctl` commands. The [CLI reference](./cli/index.md) lists every command and flag; it is generated from the released binary.
 
 ## Create a release
 
@@ -28,7 +28,7 @@ relctl release create --version-scheme calver
 relctl release create
 ```
 
-No branch prefix or PR context required. The version is derived from today's date (UTC) and local git tags: `YYYY.MM.DD.N`. N increments automatically each time you release on the same day.
+No branch prefix or PR context required. The version is derived from today's date (UTC) and local git tags: `YYYYMM.D.N`, for example `202611.3.1` for the first release on 3 November 2026. The day has no leading zero, and N increments automatically each time you release on the same day.
 
 ### Dry run
 
@@ -46,7 +46,7 @@ relctl release publish \
   --asset "file=out/myapp_darwin-arm64"
 ```
 
-`RELCTL_RELEASE_ID` is written to `$GITHUB_OUTPUT` by `release create` and can be passed between jobs. It is empty if the release is already published; see [Variables](./release-flows.md#variables).
+`RELCTL_RELEASE_ID` is written to `$GITHUB_OUTPUT` by `release create` and can be passed between jobs.
 
 ## Connect to GitHub (non-CI)
 
@@ -62,7 +62,49 @@ Verifies the connection and stores server and repository in `.relctl-connection.
 ```bash
 relctl pr info
 relctl pr info --merge-commit-sha <sha>
+relctl pr info --version-scheme calver
 ```
+
+`pr info` prints the version the pull request would release, using the version scheme of the repository (`--version-scheme`, or `version_scheme` in `.relctl.yaml`):
+
+| Scheme | The version comes from |
+| --- | --- |
+| `semver` | the branch prefix and the comment commands of the pull request |
+| `calver` | the date of the release |
+| `conventional-commits` | the commit messages since the last published release |
+| `changelog` | the topmost heading of the changelog (it may not be dated yet) |
+
+It also exports `RELCTL_VERSION_SCHEME`. The help comment on the pull request matches the scheme: only `semver` offers `relctl_patch_level` and `relctl_version_override`.
+
+## Components
+
+A repository with independently released parts declares them in `.relctl.yaml` (see [Configuration](./configuration.md#components)). Pass `--component NAME` to `release create`, `release publish`, `release gate` and `pr info`.
+
+```bash
+# Build and release only what changed since the component's latest release
+relctl release changed --component whisper
+if [ "$RELCTL_CHANGED" = "true" ]; then
+  relctl release create --component whisper
+fi
+```
+
+`release changed` needs no access to GitHub. It compares the files that match the `paths` of the component with its latest release (or with `--since <commit-or-tag>`).
+
+## Version variables
+
+`relctl release create` exports these variables (GitHub Actions: `$GITHUB_ENV` and step outputs; other systems: `relctl.env`). Each has one meaning:
+
+| Variable | Meaning |
+| --- | --- |
+| `RELCTL_VERSION` | what was created: `X.Y.Z`, or `X.Y.Z-rc.N` for a release candidate |
+| `RELCTL_NEXT_VERSION` | the release itself, so `X.Y.Z` also for a candidate |
+| `RELCTL_LATEST_VERSION` | the latest published release, never a candidate |
+| `RELCTL_PRERELEASE` | whether the created release is a candidate |
+| `RELCTL_TAG` | the version with the tag prefix (`v1.2.3` with `tag_prefix: v`) |
+| `RELCTL_COMPONENT` | the component, if `--component` was used |
+| `RELCTL_RELEASE_ID` | the ID of the draft release |
+
+`release changed` exports `RELCTL_CHANGED`, `RELCTL_CHANGED_FILES`, `RELCTL_COMPONENT` and `RELCTL_LATEST_VERSION`.
 
 ## Check version
 
@@ -76,187 +118,4 @@ Most commands accept `--dry-run` to simulate without writing to GitHub:
 
 ```bash
 relctl release create --dry-run --merge-sha <sha>
-```
-
-
-### relctl connect remove
-
-Remove the connection file (and a legacy `.awesomerc.yaml`).
-
-```
-relctl connect remove
-```
-
----
-
-## relctl pr
-
-Manage GitHub pull requests.
-
-```
-relctl pr [flags]
-```
-
-### relctl pr info
-
-Get pull request information for a given merge commit or PR number.
-
-```
-relctl pr info [flags]
-```
-
-| Flag                            | Description                      |
-| ------------------------------- | -------------------------------- |
-| `-c, --merge-commit-sha string` | Specify a merge commit SHA        |
-| `-n, --number int`              | Override the pull request number  |
-| `--component string`            | Preview the release of one [component](./release-flows.md#components) |
-
----
-
-## relctl release
-
-Manage GitHub releases.
-
-```
-relctl release [flags]
-```
-
-**Shared flags** (available on `release`, `release create`, and `release publish`):
-
-| Flag                          | Description                                                      |
-| ----------------------------- | ---------------------------------------------------------------- |
-| `-b, --body string`           | Custom release message — markdown string or path to a file      |
-| `--component string`          | Release one [component](./release-flows.md#components) of the repository |
-| `--dry-run`                   | Simulate without writing to Git                                  |
-| `--hotfix`                    | Create a hotfix release                                          |
-| `--merge-sha string`          | Override the merge commit SHA                                    |
-| `-l, --patch-level string`    | Override the SemVer bump: `major`, `minor`, or `patch`          |
-| `--prnumber int`              | Override the pull request number                                 |
-| `--release-branch string`     | Override the release branch (default: repo default branch)       |
-| `--release-prefix string`     | Custom release title prefix (default: `Release` / `Hotfix`)     |
-| `--version string`            | Override the computed version                                    |
-| `-v, --verbose`               | Verbose output                                                   |
-
-### relctl release create
-
-Compute the next SemVer version from the branch name and PR metadata, then create a GitHub release draft.
-
-```
-relctl release create [flags]
-```
-
-All shared `release` flags apply.
-
-**Step outputs** (written to `$GITHUB_OUTPUT` in GitHub Actions):
-
-`RELCTL_VERSION`, `RELCTL_TAG`, `RELCTL_NEXT_VERSION`, `RELCTL_LATEST_VERSION`, `RELCTL_PRERELEASE`, `RELCTL_COMPONENT` and `RELCTL_RELEASE_ID` are described in [Release flows: Variables](./release-flows.md#variables). `--component NAME` releases one [component](./release-flows.md#components) of the repository.
-
-### relctl release publish
-
-Publish a previously created draft release and upload assets.
-
-```
-relctl release publish [flags]
-```
-
-| Flag                      | Description                                                                      |
-| ------------------------- | -------------------------------------------------------------------------------- |
-| `-a, --asset stringArray` | Asset to upload. Repeatable. See formats below.                                  |
-| `--release-id int`        | Release ID to publish. Falls back to `RELCTL_RELEASE_ID` env var.               |
-
-**Asset formats:**
-
-| Format        | Description                                              |
-| ------------- | -------------------------------------------------------- |
-| `file=<path>` | Upload a single file                                     |
-| `zip=<dir>`   | Zip a directory, upload as `<dirname>.zip`               |
-| `tgz=<dir>`   | Tar+gzip a directory, upload as `<dirname>.tgz`          |
-
-**Examples:**
-
-```bash
-# Upload individual files
-relctl release publish \
-  --release-id 12345 \
-  --asset "file=out/relctl_v1.2.0_linux-amd64" \
-  --asset "file=out/relctl_v1.2.0_darwin-arm64"
-
-# Use env var for release ID
-export RELCTL_RELEASE_ID=12345
-relctl release publish \
-  --asset "file=out/relctl_v1.2.0_linux-amd64" \
-  --asset "zip=out/dist"
-```
-
----
-
-## relctl parse
-
-Inspect and parse JSON or YAML input. Similar to `jq` with additional features.
-
-```
-relctl parse [flags]
-```
-
-### relctl parse json
-
-```
-relctl parse json [flags]
-```
-
-| Flag                  | Description                            |
-| --------------------- | -------------------------------------- |
-| `-f, --file string`   | File to parse                          |
-| `-s, --string string` | Inline JSON string to parse            |
-| `-q, --query string`  | **(required)** Query expression        |
-
-### relctl parse yaml
-
-```
-relctl parse yaml [flags]
-```
-
-| Flag                  | Description                            |
-| --------------------- | -------------------------------------- |
-| `-f, --file string`   | File to parse                          |
-| `-s, --string string` | Inline YAML string to parse            |
-| `-q, --query string`  | **(required)** Query expression        |
-
-### relctl parse version
-
-Validate a version string against SemVer syntax.
-
-```
-relctl parse version [flags]
-```
-
----
-
-## relctl transform
-
-Transform input data to JSON.
-
-```
-relctl transform [flags]
-```
-
-### relctl transform group-by
-
-Group a string array by a common prefix into a JSON object.
-
-```
-relctl transform group-by [flags]
-```
-
-| Flag                  | Description                                                                            |
-| --------------------- | -------------------------------------------------------------------------------------- |
-| `-p, --prefix int`    | Group by prefix until this character index (default: `3`)                              |
-| `--sub-prefix int`    | Strip prefix characters up to this index from each item value                         |
-
-**Example:**
-
-```bash
-relctl transform group-by -p 3 --sub-prefix 4 \
-  st1_infrastructure-base st2_ubi9-openjdk-11 st2_ubi9-openjdk-17
-# → {"st1":["infrastructure-base"],"st2":["ubi9-openjdk-11","ubi9-openjdk-17"]}
 ```

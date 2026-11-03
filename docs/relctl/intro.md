@@ -3,7 +3,18 @@ sidebar_position: 1
 title: Introduction
 ---
 
+import ThemedImage from '@theme/ThemedImage';
+
 # relctl
+
+<ThemedImage
+  alt="relctl"
+  width="320"
+  sources={{
+    light: '/img/relctl/lockup-light.svg',
+    dark: '/img/relctl/lockup-dark.svg',
+  }}
+/>
 
 Provider-agnostic release management CLI. One binary, zero release boilerplate, four version schemes: SemVer from branch names, Conventional Commits, CalVer, or a reviewed changelog. The successor of [awesome-ci](./migrating-from-awesome-ci.md).
 
@@ -14,7 +25,7 @@ Provider-agnostic release management CLI. One binary, zero release boilerplate, 
 | Your team uses branch prefixes like `feature/`, `fix/`, `major/` | You need GitLab, Bitbucket, or Azure DevOps as source control (GitLab CI as *CI system* works) |
 | You release via GitHub Releases | You want a fully managed SaaS release tool |
 | You build multi-arch binaries in a CI matrix | |
-| You need calendar versioning (`YYYY.MM.DD.N`) | |
+| You need calendar versioning (`YYYYMM.D.N`) | |
 | You want zero release boilerplate in your pipelines | |
 
 ## Quickstart
@@ -85,7 +96,7 @@ The bump level is derived from the merged branch prefix:
 
 ### CalVer
 
-Format: **`YYYY.MM.DD.N`** (e.g. `2026.06.01.3`). No branch prefix or PR context required.
+Format: **`YYYYMM.D.N`** (e.g. `202606.1.3`: year and month, day without a leading zero, release of the day). No branch prefix or PR context required.
 
 N is calculated from local git tags only — no SCM API call, fully provider-agnostic.
 Requires `fetch-depth: 0` (already a general relctl prerequisite).
@@ -99,7 +110,7 @@ version_scheme: calver
 
 ```bash
 relctl release create --version-scheme calver --dry-run
-# → Would create new release with version: 2026.06.01.1
+# → Would create new release with version: 202606.1.1
 ```
 
 ## Supported environments

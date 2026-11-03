@@ -47,7 +47,7 @@ jobs:
       # then: relctl release publish --release-id … --asset file=…
 ```
 
-On pull requests, `relctl pr info` shows the version the PR would produce.
+On pull requests, `relctl pr info` shows the version the PR would produce, whatever the version scheme.
 
 ## Flow 2 — continuous, automatic version
 

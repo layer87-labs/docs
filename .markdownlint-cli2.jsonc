@@ -1,0 +1,22 @@
+{
+  // Pragmatic ruleset: catches structural mistakes, leaves prose style to authors.
+  "config": {
+    "default": true,
+    "MD013": false,   // line length
+    "MD024": false,   // duplicate headings (common in reference pages)
+    "MD033": false,   // inline HTML / MDX components
+    "MD041": false,   // first line heading (front matter titles are used)
+    "MD036": false,   // emphasis used as heading
+    "MD060": false,   // table column style
+    "MD025": false,   // front matter title plus an H1 is normal in Docusaurus
+    "MD040": false,   // fenced code without a language (plain output blocks)
+    "MD034": false,   // bare URLs
+    "MD001": false,   // heading increments
+    "MD012": false,   // multiple blank lines
+    "MD031": false,   // blank lines around fences
+    "MD032": false,   // blank lines around lists
+    "MD038": false    // spaces inside code spans
+  },
+  "globs": ["docs/**/*.md", "docs/**/*.mdx", "README.md", "AGENTS.md"],
+  "ignores": ["docs/relctl/changelog.md", "node_modules/**", "build/**"]
+}

@@ -27,6 +27,8 @@ relctl release create --version-scheme calver
 
 An explicit `--version` always overrides the calculated version.
 
+`relctl pr info` uses the same scheme. For `calver`, `conventional-commits` and `changelog` it prints the version the pull request would release, not a SemVer version derived from the branch prefix, and exports `RELCTL_VERSION_SCHEME`. The help comment relctl posts on the pull request says what decides the version of the scheme: only `semver` offers the comment commands below.
+
 ## SemVer (default)
 
 The bump level comes from the prefix of the merged branch. The trailing `/` is required.
@@ -62,7 +64,7 @@ Only squash-merged history is supported: relctl refuses to walk past a merge com
 
 ## CalVer
 
-Format `YYYYMM.DD.N`, for example `202606.01.3` (the number of the release on that day). `N` is calculated from local git tags only, so no API call is needed. This requires a full clone (`fetch-depth: 0`).
+Format `YYYYMM.D.N`, for example `202606.1.3`: year and month, the day of the month without a leading zero, and the number of the release on that day. `N` is calculated from local git tags only, so no API call is needed. This requires a full clone (`fetch-depth: 0`).
 
 ## Changelog
 
@@ -97,4 +99,14 @@ An explicit `--version` overrides the heading; the release notes are then only t
 
 :::note
 The `changelog` scheme is available from relctl 2.6.0; `--prerelease` from 2.7.0 and `relctl release gate` from 2.8.0.
+:::
+
+## Tag prefix and components
+
+`tag_prefix` in [`.relctl.yaml`](./configuration.md) puts a prefix in front of every tag and release (`v` gives `v1.2.3`); the version itself stays `1.2.3`, and the prefixed form is exported as `RELCTL_TAG`. relctl finds the latest release by the prefixed tags.
+
+A repository with independently released parts declares them as [components](./configuration.md#components). A component has its own tag prefix (default `<name>/`), its own latest release and its own CalVer counter, so `whisper/202611.3.1` and `router-v202611.3.1` do not interfere. Components use the `calver` or `changelog` scheme.
+
+:::note
+`tag_prefix`, components, `relctl release changed` and the per-scheme `pr info` are available from relctl 2.11.0.
 :::

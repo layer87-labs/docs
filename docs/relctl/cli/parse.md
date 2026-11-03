@@ -1,51 +1,60 @@
 ---
-sidebar_position: 5
+sidebar_position: 3
 title: parse
 ---
 
+:::note
+This page is generated from the command line of relctl. Do not edit it by hand.
+:::
+
 # relctl parse
 
-Inspect and parse JSON and YAML files to retrieve values — similar to `jq` with additional features.
+inspect and parse JSON and YAML files to retrieve values, similar to jq with additional features
 
-```bash
-relctl parse [flags]
+```text
+relctl parse
 ```
 
-```
-  -h, --help      help for parse
-  -v, --verbose   verbose output
-```
 
-## parse json
+## relctl parse json
 
-```bash
+parse a json string or file
+
+```text
 relctl parse json [flags]
 ```
 
-```
-  -f, --file string     JSON file to parse
-  -q, --query string    jq-style query expression
+Flags:
+
+```text
+  -f, --file string     file to be parsed
+  -q, --query string    (required) query for output
+  -s, --string string   query for output
 ```
 
-## parse yaml
 
-```bash
+## relctl parse version
+
+Validate the given version string against semver syntax
+
+```text
+relctl parse version
+```
+
+
+## relctl parse yaml
+
+parse a yaml string or file
+
+```text
 relctl parse yaml [flags]
 ```
 
-```
-  -f, --file string     YAML file to parse
-  -q, --query string    query expression
+Flags:
+
+```text
+  -f, --file string     file to be parsed
+  -q, --query string    (required) query for output
+  -s, --string string   query for output
 ```
 
-## parse version
-
-Validate a version string against semver syntax.
-
-```bash
-relctl parse version [flags]
-```
-
-```
-  -v, --version string   version string to validate
-```

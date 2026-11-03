@@ -3,41 +3,38 @@ sidebar_position: 6
 title: transform
 ---
 
+:::note
+This page is generated from the command line of relctl. Do not edit it by hand.
+:::
+
 # relctl transform
 
-Transform input to JSON.
+transform given input to json
 
-```bash
-relctl transform [flags]
+```text
+relctl transform
 ```
 
-```
-  -h, --help      help for transform
-  -v, --verbose   verbose output
-```
 
-## transform group-by
+## relctl transform group-by
 
-Group a string array by prefix into a JSON map. Useful for grouping build matrix outputs by stage or category.
+group string array by prefix to json
 
-```bash
+```text
 relctl transform group-by [flags]
 ```
 
-```
-  -h, --help             help for group-by
-  -p, --prefix int       group by prefix until character index (default 3)
-      --sub-prefix int   strip prefix until character index from values
-```
+Flags:
 
-### Example
-
-```bash
-relctl tf group-by -p 3 --sub-prefix 4 st1_infrastructure-base st2_ubi9-openjdk-11 st2_ubi9-openjdk-17
+```text
+  -p, --prefix int       group by prefix until index -- eg.: 'st1_base-image' and int 3, will be grouped by 'st1' (default 3)
+      --sub-prefix int   remove prefix until index number -- eg.: 'st1_base-image' and 4 will be 'base-image'
 ```
 
-Output:
+Examples:
 
-```json
-{"st1":["infrastructure-base"],"st2":["ubi9-openjdk-11","ubi9-openjdk-17"]}
+```text
+relctl tf group-by -p 3 --sub-prefix 4 st1_infrastructure-base  st2_ubi9-openjdk-11  st2_ubi9-openjdk-17 
+   produces: {"st1":["infrastructure-base"],"st2":["ubi9-openjdk-11","ubi9-openjdk-17"]}
 ```
+

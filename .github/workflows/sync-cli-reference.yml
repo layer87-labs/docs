@@ -1,0 +1,142 @@
+name: Sync relctl CLI reference
+
+# Regenerates docs/relctl/cli/ from the latest published relctl release and opens (or updates) a pull
+# request on the fixed branch chore/cli-reference when the pages changed. A human merges it.
+on:
+  schedule:
+    - cron: '43 4 * * 1'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [relctl-release]
+
+permissions:
+  contents: write
+  pull-requests: write
+  # Only to start the CI workflow on the generated branch (see the last step).
+  actions: write
+
+concurrency:
+  group: sync-cli-reference
+  cancel-in-progress: false
+
+env:
+  BRANCH: chore/cli-reference
+  RELCTL_REPO: layer87-labs/relctl
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  sync:
+    name: Regenerate CLI reference
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Resolve the latest published release
+        id: release
+        run: |
+          # "latest" is the newest published release: never a draft, never a pre-release.
+          TAG=$(gh api "repos/$RELCTL_REPO/releases/latest" --jq .tag_name)
+          if ! printf '%s' "$TAG" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Unexpected tag of the latest release: '$TAG'"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Latest relctl release: $TAG"
+
+      - name: Download the binary and verify its checksum
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/relctl"
+          cd "$RUNNER_TEMP/relctl"
+          ASSET="relctl_${TAG}_linux-amd64"
+          gh release download "$TAG" --repo "$RELCTL_REPO" --pattern "$ASSET" --pattern sha256sum.txt
+          # Exact file name match, so a longer name (for example the .bundle file) cannot satisfy the check.
+          grep -E "^[0-9a-f]{64}  ${ASSET}\$" sha256sum.txt > expected.txt
+          test "$(wc -l < expected.txt)" -eq 1
+          sha256sum --check expected.txt
+          chmod +x "$ASSET"
+          ln -s "$ASSET" relctl
+
+      - name: Generate the pages
+        run: |
+          rm -rf "$RUNNER_TEMP/cli"
+          "$RUNNER_TEMP/relctl/relctl" docs --out "$RUNNER_TEMP/cli"
+          test -f "$RUNNER_TEMP/cli/index.md"
+          # Replace the generated pages; the folder's _category_.json is maintained by hand.
+          find docs/relctl/cli -type f -name '*.md' -delete
+          cp "$RUNNER_TEMP"/cli/*.md docs/relctl/cli/
+
+      - name: Detect changes
+        id: diff
+        run: |
+          git add -A docs/relctl/cli
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "The CLI reference is up to date."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --cached --stat
+          fi
+
+      - name: Close a stale pull request
+        if: steps.diff.outputs.changed == 'false'
+        run: |
+          # main already has the current reference, so an open sync pull request is obsolete.
+          NUMBER=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$NUMBER" ]; then
+            gh pr close "$NUMBER" --delete-branch \
+              --comment "The CLI reference on main is already up to date with the latest relctl release."
+          fi
+
+      - name: Push the branch
+        id: push
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git commit -m "docs(relctl): regenerate CLI reference for $TAG"
+
+          # The branch is owned by this workflow. Skip the push if it already holds exactly these pages,
+          # so an unchanged week does not restart CI.
+          if git fetch --quiet origin "$BRANCH" 2>/dev/null \
+            && git diff --quiet "origin/$BRANCH" HEAD -- docs/relctl/cli \
+            && [ -n "$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')" ]; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            echo "Branch $BRANCH is already up to date."
+          else
+            git push --force origin "$BRANCH"
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open or update the pull request
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          TITLE="docs(relctl): regenerate CLI reference for $TAG"
+          BODY=$(cat <<EOF
+          Regenerates \`docs/relctl/cli/\` with \`relctl docs\` from the published relctl release [$TAG](https://github.com/$RELCTL_REPO/releases/tag/$TAG).
+
+          The binary was downloaded from the release and verified against its \`sha256sum.txt\` before it ran. The pages are generated and must not be edited by hand; fix the help text in relctl instead.
+
+          This pull request is maintained by the \`Sync relctl CLI reference\` workflow and is not merged automatically. The \`CI\` workflow is started on the branch by the workflow, because pushes made with the workflow token do not trigger it.
+          EOF
+          )
+          NUMBER=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$NUMBER" ]; then
+            gh pr edit "$NUMBER" --title "$TITLE" --body "$BODY"
+          else
+            gh pr create --base main --head "$BRANCH" --title "$TITLE" --body "$BODY"
+          fi
+
+      - name: Run CI on the branch
+        if: steps.push.outputs.pushed == 'true'
+        run: |
+          # Pushes and pull requests made with GITHUB_TOKEN do not start workflows, except workflow_dispatch.
+          # The run is attached to the head commit of the branch and shows up as a check on the pull request.
+          gh workflow run ci.yml --ref "$BRANCH"

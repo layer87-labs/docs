@@ -47,13 +47,18 @@ Pin to a specific version:
 
 ```bash
 # Linux amd64
-curl -fsSL -o relctl \
-  https://github.com/layer87-labs/relctl/releases/latest/download/relctl_linux-amd64
-chmod +x relctl
-sudo mv relctl /usr/local/bin/relctl
+# Assets are named relctl_<version>_<os>-<arch>
+VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
+  https://github.com/layer87-labs/relctl/releases/latest | sed 's|.*/||')
+ASSET="relctl_${VERSION}_linux-amd64"
+curl -fsSLO "https://github.com/layer87-labs/relctl/releases/download/${VERSION}/${ASSET}"
+curl -fsSLO "https://github.com/layer87-labs/relctl/releases/download/${VERSION}/sha256sum.txt"
+grep " ${ASSET}\$" sha256sum.txt | sha256sum --check -
+chmod +x "${ASSET}"
+sudo mv "${ASSET}" /usr/local/bin/relctl
 ```
 
-Available suffixes:
+Available suffixes (the asset is `relctl_<version>_<suffix>`):
 
 | Platform       | Suffix               |
 | -------------- | -------------------- |
@@ -65,11 +70,7 @@ Available suffixes:
 
 ### Verify checksum
 
-```bash
-curl -fsSL -o sha256sum.txt \
-  https://github.com/layer87-labs/relctl/releases/latest/download/sha256sum.txt
-sha256sum --check --ignore-missing sha256sum.txt
-```
+The commands above already check the download against `sha256sum.txt` of the release. For another platform, replace `linux-amd64` in `ASSET` and keep the check.
 
 ### Smoke test
 

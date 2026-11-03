@@ -102,7 +102,7 @@ No branch prefix or PR context is required with CalVer.
 
 ## How is the CalVer N counter calculated?
 
-`N` is derived exclusively from local git tags matching `YYYY.MM.DD.*` for today's date (UTC). relctl lists all matching tags, takes the highest N, and adds 1. If no tag exists for today, N starts at 1. No SCM API call is made.
+`N` is derived exclusively from local git tags matching `YYYYMM.D.*` for today's date (UTC). relctl lists all matching tags, takes the highest N, and adds 1. If no tag exists for today, N starts at 1. No SCM API call is made.
 
 Requirement: the repository must be checked out with full tag history (`fetch-depth: 0`).
 

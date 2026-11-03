@@ -376,3 +376,19 @@ table tbody td {
   height: auto;
   margin: 0;
 }
+
+/* ─── Accessibility ─────────────────────────────────────────────────────────── */
+/* Links inside running text must not rely on color alone. */
+.markdown a:not(.button),
+.footer__copyright a {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Dracula's comment color is below 4.5:1 on its own background. */
+[data-theme='dark'] .token.comment,
+[data-theme='dark'] .token.prolog,
+[data-theme='dark'] .token.doctype,
+[data-theme='dark'] .token.cdata {
+  color: #8b9bc8 !important; /* overrides the inline token style */
+}

@@ -19,14 +19,18 @@ changelog_file: CHANGELOG.md
 production_branch: main      # receives the releases
 development_branch: dev      # work lands here first
 
-# Tags and releases get this prefix: "v" gives v1.2.3 (the version itself stays 1.2.3).
+# A prefix in front of every tag and release: "v" gives v1.2.3.
 tag_prefix: v
 
-# Independently released parts of the repository.
+# Independently released parts of the repository (see Release flows).
 components:
-  whisper:
-    paths: ["deploy/whisper/**", "deploy/Containerfile.whisper"]
-    version_scheme: calver   # components use calver or changelog
+  api:
+    paths: ["services/api/**", "libs/common/**"]
+  worker:
+    tag_prefix: worker-v
+    paths: ["services/worker/**", "libs/common/**"]
+    version_scheme: changelog
+    changelog_file: services/worker/CHANGELOG.md
 ```
 
 | Key | Default | Used by |
@@ -35,28 +39,44 @@ components:
 | `changelog_file` | `CHANGELOG.md` | the `changelog` scheme, `release gate` |
 | `production_branch` | `main` | `release forward` (the branch that is brought back into the development branch) |
 | `development_branch` | the default branch of the repository | `release forward` |
-| `tag_prefix` | — | every command that reads or creates tags and releases; `RELCTL_TAG` is the version with the prefix |
-| `components` | — | `release create`, `publish`, `gate`, `changed` and `pr info` with `--component` — see [Components](#components) |
 | `default_branch` | — | former name of `production_branch`; still read and used if `production_branch` is not set |
+| `tag_prefix` | none | every command that reads or writes tags and releases — see [Tag prefix](#tag-prefix) |
+| `components` | none | `--component` on `release create`, `release publish`, `release gate`, `pr info`, and `release changed` — see [Components](#components) |
+
+## Tag prefix
+
+`tag_prefix` is put in front of every tag and release of the repository: with `tag_prefix: v`, relctl creates the tag and release `v1.2.3` for the version `1.2.3`. The version itself stays plain: `RELCTL_VERSION` is `1.2.3`, the changelog heading is `## 1.2.3`, and the prefixed name is available as `RELCTL_TAG` (see [Variables](./release-flows.md#variables)).
+
+The prefix is also used to find the latest release. A repository that tags `v1.2.3` needs `tag_prefix: v`; without it relctl does not recognise those tags and finds no latest release.
 
 ## Components
 
-A component is a part of one repository that is released independently, for example a container image next to a library. Each entry under `components` has:
+A *component* is a part of one repository that is released independently of the others, for example one container image each in a repository that holds two services. Every component has
 
-| Key | Meaning |
-| --- | --- |
-| `paths` | glob patterns of the files that belong to the component |
-| `version_scheme` | `calver` or `changelog` |
-| `tag_prefix` | optional; the default is `<name>/` |
+- its own **tag prefix** (default `<name>/`, so `api/202611.3.1`),
+- its own **latest release**, found by that prefix, and
+- its own **CalVer counter**: the number `N` of `YYYYMM.D.N` counts only the releases of that component on that day.
 
-A component has its own tag prefix, its own latest release and its own CalVer counter. Select it with `--component NAME` on `release create`, `release publish`, `release gate` and `pr info`.
+| Key (under `components.<name>`) | Default | Meaning |
+| --- | --- | --- |
+| `paths` | none | Glob patterns of the files that belong to the component. `*` matches within a directory, `**` any number of directories, a plain directory name (`services/api`) everything below it. Required by `relctl release changed`. |
+| `tag_prefix` | `<name>/` | Prefix of the component's tags and releases. The repository's `tag_prefix` does not apply to components. |
+| `version_scheme` | the repository's scheme | `calver` or `changelog`. Other schemes are rejected: the version of a component must not depend on branch names or commits that belong to other components. |
+| `changelog_file` | the repository's `changelog_file` | The changelog of the component, for the `changelog` scheme and `release gate`. |
 
-`relctl release changed --component NAME` tells whether a file of the component changed since its latest release (or since `--since <commit-or-tag>`), so a pipeline builds only what changed. It needs no access to GitHub and exports `RELCTL_CHANGED`, `RELCTL_CHANGED_FILES`, `RELCTL_COMPONENT` and `RELCTL_LATEST_VERSION`.
+Component names consist of lower case letters, digits, `.`, `_` and `-`. Select a component with `--component NAME`:
 
 ```bash
-relctl release changed --component whisper
-[ "$RELCTL_CHANGED" = "true" ] && relctl release create --component whisper
+relctl release create --component api
 ```
+
+relctl rejects
+
+- an **unknown component**, and lists the known ones: `unknown component "foo": known components: api, worker`,
+- **tag prefixes that collide**, between components or with the repository's `tag_prefix`: `component "a" and the repository use the same tag prefix "a/"`,
+- a component whose scheme is not `calver` or `changelog`.
+
+A complete pipeline is shown in [Release flows: Components](./release-flows.md#components).
 
 ## Priority
 
@@ -65,8 +85,7 @@ command-line flag > `.relctl.yaml` > built-in default
 | Flag | Overrides |
 | --- | --- |
 | `--config <path>` | the location of the config file (default `.relctl.yaml`) |
-| `--version-scheme <scheme>` | `version_scheme` |
-| `--component <name>` | selects an entry of `components` |
+| `--version-scheme <scheme>` | `version_scheme` (of the repository or, with `--component`, of the component) |
 | `--from <branch>`, `--to <branch>` (`release forward`) | `production_branch`, `development_branch` |
 
 ## Why the branches are configured and not guessed

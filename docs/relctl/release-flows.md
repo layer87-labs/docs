@@ -152,6 +152,147 @@ relctl release forward --from main --to dev --dry-run
 
 The branches come from [`.relctl.yaml`](./configuration.md) (`production_branch`, `development_branch`). The result is exported as `RELCTL_FORWARD_RESULT` (`nothing`, `fast-forward`, `pull-request`) and `RELCTL_FORWARD_PR`.
 
+## Tag prefix
+
+By default a release is tagged with its plain version: `1.2.3`. Set `tag_prefix` in [`.relctl.yaml`](./configuration.md#tag-prefix) to put a prefix in front of every tag and release, for example `v`:
+
+```yaml
+tag_prefix: v
+```
+
+relctl then creates `v1.2.3` and finds the latest release among the `v…` tags. The version stays plain everywhere else (`RELCTL_VERSION=1.2.3`, changelog heading `## 1.2.3`); `RELCTL_TAG` carries the prefixed name, for example for a container image tag. Repositories that already tag with `v` need this setting, otherwise their latest release is not found.
+
+## Components
+
+A repository that builds more than one deliverable, such as two container images, does not have to release them together. Each *component* has its own tag prefix, its own latest release and its own CalVer counter, so `api/202611.3.1` and `worker/202611.3.1` do not interfere. The settings are described in [Configuration](./configuration.md#components). Components use the `calver` or `changelog` scheme.
+
+```yaml title=".relctl.yaml"
+version_scheme: calver
+
+components:
+  api:
+    paths:
+      - services/api/**
+      - libs/common/**
+  worker:
+    paths:
+      - services/worker/**
+      - libs/common/**
+```
+
+A change to `libs/common/` releases both images, a change to `services/api/` only `api`. The pipeline asks `relctl release changed` which components are affected, creates a draft release for those, builds and pushes the image, and publishes the release when the push succeeded:
+
+```yaml title=".github/workflows/release.yaml"
+name: Release
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [api, worker]
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      IMAGE: ghcr.io/example-org/example-repo-${{ matrix.component }}
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0 }   # history and tags: needed by `release changed` and CalVer
+      - uses: layer87-labs/relctl-action@v1
+        with: { github-token: "${{ secrets.GITHUB_TOKEN }}" }
+
+      - id: changed
+        run: relctl release changed --component ${{ matrix.component }}
+
+      - id: release
+        if: steps.changed.outputs.RELCTL_CHANGED == 'true'
+        run: relctl release create --component ${{ matrix.component }} --merge-sha ${{ github.sha }}
+
+      # An already published release exports no release id: nothing is built twice.
+      - if: steps.release.outputs.RELCTL_RELEASE_ID != ''
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - if: steps.release.outputs.RELCTL_RELEASE_ID != ''
+        uses: docker/build-push-action@v6
+        with:
+          context: services/${{ matrix.component }}
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.release.outputs.RELCTL_VERSION }}
+            ${{ env.IMAGE }}:latest
+          labels: release-tag=${{ steps.release.outputs.RELCTL_TAG }}
+
+      - if: steps.release.outputs.RELCTL_RELEASE_ID != ''
+        run: |
+          relctl release publish --component "${{ matrix.component }}" \
+            --release-id "${{ steps.release.outputs.RELCTL_RELEASE_ID }}"
+```
+
+`relctl release changed` needs the full history and the tags, but no access to GitHub. It compares the files that differ between `HEAD` and the component's latest release (the highest release tag of the component that is reachable from `HEAD`; release candidates do not count) with the component's `paths`:
+
+```text
+$ relctl release changed --component api
+Component api since api/202611.3.1: 1 of 2 changed files belong to it
+  libs/common/c.go
+Changed: true
+```
+
+- A component without a release counts as changed.
+- `--since REF` compares with a commit or tag of your choice instead of the latest release; `RELCTL_LATEST_VERSION` is then empty.
+- It exports `RELCTL_CHANGED` (`true` or `false`), `RELCTL_CHANGED_FILES` (the number of files that belong to the component), `RELCTL_COMPONENT` and `RELCTL_LATEST_VERSION`.
+
+With the `changelog` scheme a component reads its own changelog (`changelog_file`). `relctl release gate --component NAME` checks that changelog and the release candidates of that component, and `relctl pr info --component NAME` previews the version of a component.
+
+The image tag uses `RELCTL_VERSION` (`202611.3.2`), not `RELCTL_TAG`: with the default prefix the tag is `api/202611.3.2`, and a `/` is not allowed in an image tag. `RELCTL_TAG` is the name of the Git tag and of the release on GitHub.
+
+## Variables
+
+`relctl release create` and `relctl pr info` export their result as variables: to `$GITHUB_ENV` and as step outputs in GitHub Actions, to a file (`relctl.env`) in other CI systems. This table is the reference for all pages.
+
+| Variable | Exported by | Value |
+| --- | --- | --- |
+| `RELCTL_VERSION` | `release create`, `pr info` | The version that was created: `X.Y.Z`, or `X.Y.Z-rc.N` for a release candidate. `pr info` exports the version the pull request would release. |
+| `RELCTL_TAG` | `release create` | `RELCTL_VERSION` with the tag prefix of the repository or component: `v1.2.3`, `api/202611.3.1`. |
+| `RELCTL_NEXT_VERSION` | `release create`, `pr info` | The release: `X.Y.Z`. For a release candidate it is the release the candidate is a candidate for, not the candidate. |
+| `RELCTL_LATEST_VERSION` | `release create`, `pr info`, `release changed` | The latest published release. Never a candidate; for a component, the latest release of that component. Empty if there is none. |
+| `RELCTL_PRERELEASE` | `release create` | `true` for a release candidate, otherwise `false`. |
+| `RELCTL_COMPONENT` | `release create`, `release changed` | The component that is released; empty for the repository itself. |
+| `RELCTL_RELEASE_ID` | `release create` | The id of the **draft** that a pipeline continues with (build, `release publish`). **Empty if the release is already published**, because there is nothing left to build or upload. |
+| `RELCTL_VERSION_SCHEME` | `pr info` | The scheme that applies: `semver`, `conventional-commits`, `calver` or `changelog`. |
+| `RELCTL_CHANGED`, `RELCTL_CHANGED_FILES` | `release changed` | Whether files of the component changed since its latest release, and how many. |
+
+`RELCTL_PR_SHA`, `RELCTL_PR_SHA_SHORT` and the other pull request variables of `pr info` are listed in [CI integration](./ci-integration.md#step-outputs).
+
+Guard every build step on the release id. In a pipeline with separate jobs, pass the id on as a job output and condition the jobs on it:
+
+```yaml
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      release-id: ${{ steps.release.outputs.RELCTL_RELEASE_ID }}
+      version: ${{ steps.release.outputs.RELCTL_VERSION }}
+    steps:
+      # … checkout, setup, then:
+      - id: release
+        run: relctl release create
+  build:
+    needs: release
+    if: needs.release.outputs.release-id != ''
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "build ${{ needs.release.outputs.version }}"
+```
+
 ## The release text
 
 Every release has a text, whatever the flow:

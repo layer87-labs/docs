@@ -277,19 +277,12 @@ jobs:
 
 ### Step outputs
 
-After `relctl release create`, these outputs are set in `$GITHUB_OUTPUT`:
+After `relctl release create`, the version variables (`RELCTL_VERSION`, `RELCTL_TAG`, `RELCTL_NEXT_VERSION`, `RELCTL_RELEASE_ID` and more) are set in `$GITHUB_OUTPUT`. They are described in [Release flows: Variables](./release-flows.md#variables); note that `RELCTL_RELEASE_ID` is empty for a release that is already published. `relctl pr info` additionally sets:
 
-| Variable                | Description                                                          |
-| ----------------------- | -------------------------------------------------------------------- |
-| `RELCTL_VERSION`        | What was created: `X.Y.Z`, or `X.Y.Z-rc.N` for a release candidate   |
-| `RELCTL_NEXT_VERSION`   | The release version (`X.Y.Z` also for a candidate)                   |
-| `RELCTL_LATEST_VERSION` | The latest published release, never a candidate                      |
-| `RELCTL_PRERELEASE`     | Whether the created release is a candidate                           |
-| `RELCTL_TAG`            | The version with the tag prefix (`v1.2.3` with `tag_prefix: v`)      |
-| `RELCTL_COMPONENT`      | The component, if `--component` was used                             |
-| `RELCTL_RELEASE_ID`     | GitHub release ID of the draft                                       |
-| `RELCTL_PR_SHA`         | Full merge commit SHA                                                |
-| `RELCTL_PR_SHA_SHORT`   | Short (7-char) merge commit SHA                                      |
+| Variable              | Description                     |
+| --------------------- | ------------------------------- |
+| `RELCTL_PR_SHA`       | Full merge commit SHA           |
+| `RELCTL_PR_SHA_SHORT` | Short (7-char) merge commit SHA |
 
 ### Hotfix release
 
@@ -323,10 +316,8 @@ pipeline {
     stage('Install relctl') {
       steps {
         sh '''
-          VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
-            https://github.com/layer87-labs/relctl/releases/latest | sed 's|.*/||')
           curl -fsSL -o relctl \
-            "https://github.com/layer87-labs/relctl/releases/download/${VERSION}/relctl_${VERSION}_linux-amd64"
+            https://github.com/layer87-labs/relctl/releases/latest/download/relctl_linux-amd64
           chmod +x relctl
           mv relctl /usr/local/bin/relctl
         '''

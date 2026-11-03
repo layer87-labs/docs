@@ -62,7 +62,7 @@ Only squash-merged history is supported: relctl refuses to walk past a merge com
 
 ## CalVer
 
-Format `YYYYMM.DD.N`, for example `202606.01.3` (the number of the release on that day). `N` is calculated from local git tags only, so no API call is needed. This requires a full clone (`fetch-depth: 0`).
+Format `YYYYMM.D.N`, for example `202606.1.3` (June 1st, the third release of that day; the day has no leading zero). `N` is calculated from local git tags only, so no API call is needed. This requires a full clone (`fetch-depth: 0`).
 
 ## Changelog
 
@@ -87,7 +87,7 @@ Rules, enforced strictly:
 
 1. refuses an **undated** heading (only released versions are released),
 2. uses the section below the heading as the release notes, unless `--body` is given,
-3. is **idempotent**: if a release (draft or published) or a tag for that version already exists, it exits successfully and creates nothing. An existing draft is reused and its id exported as `RELCTL_RELEASE_ID`.
+3. is **idempotent**: if a release (draft or published) or a tag for that version already exists, it exits successfully and creates nothing. An existing draft is reused and its id exported as `RELCTL_RELEASE_ID`. For a release that is already published no id is exported.
 
 The check reads GitHub's list of releases, which can lag by a few seconds after a release is created or published. A rerun within seconds of the first run (for example *Re-run failed jobs*) may therefore not see it yet; reruns a minute later are safe.
 

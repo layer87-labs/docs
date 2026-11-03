@@ -55,4 +55,4 @@ Jenkins sets `GIT_URL` to the URL of the repository (`https://ghe.example.com/or
 
 ## Release environment variables
 
-Whatever the CI system, relctl exports `RELCTL_VERSION`, `RELCTL_NEXT_VERSION`, `RELCTL_RELEASE_ID`, `RELCTL_LATEST_VERSION` and further variables: to `$GITHUB_ENV` and as step outputs in GitHub Actions, to a file (`relctl.env`) elsewhere.
+Whatever the CI system, relctl exports `RELCTL_VERSION`, `RELCTL_TAG`, `RELCTL_NEXT_VERSION`, `RELCTL_RELEASE_ID`, `RELCTL_LATEST_VERSION` and further variables ([reference](./release-flows.md#variables)): to `$GITHUB_ENV` and as step outputs in GitHub Actions, to a file (`relctl.env`) elsewhere.

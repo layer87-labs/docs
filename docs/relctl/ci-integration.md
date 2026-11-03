@@ -277,12 +277,10 @@ jobs:
 
 ### Step outputs
 
-After `relctl release create`, these outputs are set in `$GITHUB_OUTPUT`:
+After `relctl release create`, the version variables (`RELCTL_VERSION`, `RELCTL_TAG`, `RELCTL_NEXT_VERSION`, `RELCTL_RELEASE_ID` and more) are set in `$GITHUB_OUTPUT`. They are described in [Release flows: Variables](./release-flows.md#variables); note that `RELCTL_RELEASE_ID` is empty for a release that is already published. `relctl pr info` additionally sets:
 
 | Variable              | Description                     |
 | --------------------- | ------------------------------- |
-| `RELCTL_NEXT_VERSION` | Computed next SemVer version    |
-| `RELCTL_RELEASE_ID`   | GitHub release ID of the draft  |
 | `RELCTL_PR_SHA`       | Full merge commit SHA           |
 | `RELCTL_PR_SHA_SHORT` | Short (7-char) merge commit SHA |
 

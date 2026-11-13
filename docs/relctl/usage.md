@@ -17,6 +17,40 @@ relctl release create --merge-sha <sha>
 
 Reads the merged PR's branch name, computes the next SemVer version, and creates a draft GitHub Release.
 
+### Breaking-change markers (SemVer)
+
+In the SemVer scheme the branch prefix (for example `fix/` or `feature/`) decides the bump. A pull request that carries a Conventional Commits breaking-change marker can therefore be released as a patch or minor version by accident. The `breaking_markers` option in `.relctl.yaml` decides what relctl does about it:
+
+```yaml
+# .relctl.yaml
+breaking_markers: warn   # major | warn | off
+```
+
+| Value | Behaviour |
+| --- | --- |
+| `warn` (default) | Keeps the bump. Warns in the log, in the GitHub Actions run summary and at the top of the release notes. |
+| `major` | Raises the bump to major. |
+| `off` | Ignores markers (the behaviour before 2.12.0). |
+
+**The default changes to `major` in 3.0.0.** Set `breaking_markers: major` to get that behaviour now.
+
+What counts as a marker:
+
+- a `type!:` or `type(scope)!:` header, for example `fix!: drop the old API` or `fix(forms)!: rename a field`, in the pull request title or in a subject of one of the pull request's own commits
+- a `BREAKING CHANGE: ` or `BREAKING-CHANGE: ` footer (upper case, colon and space) at the very start of a line, not indented, in the pull request description or in one of its own commits. A footer in the pull request title does not count.
+
+relctl does not look at markers inside fenced code blocks, HTML comments or `<details>` blocks. It reads only the pull request's own commits, not the merge commit and not commits of the target branch. The description of pull requests from `renovate/` and `dependabot/` branches is ignored, because it quotes upstream release notes; their title and commits are still checked.
+
+A marker never lowers the bump. The bump is decided in this order:
+
+1. The branch prefix gives the base level.
+2. A `relctl_patch_level` comment replaces it.
+3. A breaking-change marker then raises the level to major (`major`) or only warns (`warn`). If the level is already major, nothing changes.
+
+If the commits of a pull request cannot be read completely, `breaking_markers: major` fails the release, so that a breaking change cannot slip through as a patch. `warn` continues and checks only the title and description.
+
+To release a breaking change as a major version when the markers are not enough, use a `major/` branch prefix, a `relctl_patch_level: major` comment, or `relctl_version_override`.
+
 ### CalVer
 
 ```bash

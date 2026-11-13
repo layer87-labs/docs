@@ -148,9 +148,10 @@ relctl release forward --from main --to dev --dry-run
 - If `dev` already contains `main`, nothing happens.
 - If `dev` is an ancestor of `main`, `dev` is **fast-forwarded**. This needs a token that may push to `dev`; with branch rules that require pull requests only a bypass actor can.
 - Otherwise (the branches diverged, or the push is not allowed) a **pull request** `main` → `dev` is opened. **Merge it with a merge commit, do not squash it**: a squash creates a commit that `main` never had and causes conflicts with the next release.
+- If `dev` does not exist (for example because the repository deletes head branches on merge and the release pull request came from `dev`), it is **recreated** at the head of `main`. This only happens for the `development_branch` from `.relctl.yaml`, never for a name given with `--to`, and needs a token that may create branches. With `--dry-run` nothing is created; the result is `recreated` and the output says `Would recreate`.
 - It is idempotent: a second run does not open a second pull request.
 
-The branches come from [`.relctl.yaml`](./configuration.md) (`production_branch`, `development_branch`). The result is exported as `RELCTL_FORWARD_RESULT` (`nothing`, `fast-forward`, `pull-request`) and `RELCTL_FORWARD_PR`.
+The branches come from [`.relctl.yaml`](./configuration.md) (`production_branch`, `development_branch`). The result is exported as `RELCTL_FORWARD_RESULT` (`nothing`, `fast-forward`, `pull-request`, `recreated`) and `RELCTL_FORWARD_PR`.
 
 ## Tag prefix
 

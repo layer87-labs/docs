@@ -19,6 +19,10 @@ changelog_file: CHANGELOG.md
 production_branch: main      # receives the releases
 development_branch: dev      # work lands here first
 
+# semver scheme: what a breaking-change marker (`fix!:`, `BREAKING CHANGE: `) does.
+# warn (default) | major | off. The default becomes major in 3.0.0.
+breaking_markers: warn
+
 # A prefix in front of every tag and release: "v" gives v1.2.3.
 tag_prefix: v
 
@@ -40,6 +44,7 @@ components:
 | `production_branch` | `main` | `release forward` (the branch that is brought back into the development branch) |
 | `development_branch` | the default branch of the repository | `release forward` |
 | `default_branch` | — | former name of `production_branch`; still read and used if `production_branch` is not set |
+| `breaking_markers` | `warn` | `release create`, `pr info` (SemVer scheme): `major`, `warn` or `off` — see [Breaking-change markers](./usage.md#breaking-change-markers-semver). The default becomes `major` in 3.0.0. |
 | `tag_prefix` | none | every command that reads or writes tags and releases — see [Tag prefix](#tag-prefix) |
 | `components` | none | `--component` on `release create`, `release publish`, `release gate`, `pr info`, and `release changed` — see [Components](#components) |
 

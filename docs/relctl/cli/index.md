@@ -10,8 +10,8 @@ This page is generated from the command line of relctl. Do not edit it by hand.
 # relctl
 
 ```text
-relctl make your release tagging easy
-Comatible with CI pipelines like Jenkins and GitHub
+relctl makes your release tagging easy
+Compatible with CI pipelines like Jenkins and GitHub
 Find more information and examples at: https://github.com/layer87-labs/relctl
 ```
 

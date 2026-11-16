@@ -12,7 +12,7 @@ This page is generated from the command line of relctl. Do not edit it by hand.
 Manage GitHub pull requests
 
 ```text
-The pull request command is used to manage GitHub pull requests. It provides subcommands to get pull request info, allowing you to get all infos about a pull request in GitHub.
+The pull request command is used to manage GitHub pull requests. It provides subcommands to get pull request info, allowing you to get all information about a pull request in GitHub.
 ```
 
 ```text

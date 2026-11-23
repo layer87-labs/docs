@@ -35,7 +35,7 @@ relctl connect check
 
 ## relctl connect github
 
-connect initial to a GitHub or GitHub Enterprise
+Connect to a GitHub or GitHub Enterprise instance
 
 ```text
 relctl connect github [flags]
